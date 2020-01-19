@@ -3,6 +3,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -40,6 +41,7 @@ public class LoadingScreen extends ScreenAdapter {
         viewport.apply(true);
         shapeRenderer = new ShapeRenderer();
         breakoutGame.getAssetManager().load("background.jpg", Texture.class);
+        breakoutGame.getAssetManager().load("bounce.mp3", Sound.class);
     }
 
     @Override
