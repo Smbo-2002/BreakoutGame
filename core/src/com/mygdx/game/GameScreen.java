@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
@@ -14,7 +15,7 @@ import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-public class GameScreen extends ScreenAdapter {
+public class GameScreen extends ScreenAdapter  implements InputProcessor {
 
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 640;
@@ -36,12 +37,17 @@ public class GameScreen extends ScreenAdapter {
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply(true);
+
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
+
         bg = breakoutGame.getAssetManager().get("background.jpg");
         Sound bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
-        paddle = new Paddle();
-        ball = new Ball(100, 100, bounceSound);
+
+        paddle = new Paddle( WORLD_WIDTH/2 - Paddle.INITIAL_WIDTH / 2, 40, this);
+        ball = new Ball(100, 100, bounceSound, this);
+
+        Gdx.input.setInputProcessor(this);
     }
 
     @Override
@@ -65,6 +71,7 @@ public class GameScreen extends ScreenAdapter {
     private void clearScreen() {
         Gdx.gl.glClearColor(Color.BLACK.r, Color.BLACK.g, Color.BLACK.b, Color.BLACK.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
         batch.setProjectionMatrix(camera.projection);
         batch.setTransformMatrix(camera.view);
         batch.begin();
@@ -83,8 +90,10 @@ public class GameScreen extends ScreenAdapter {
 
     private void update(float delta) {
         if (!gameBegan) checkStart();
+
         paddle.update(delta);
         ball.update(delta);
+
         stopBallLeavingTheScreen();
         stopPaddleLeavingTheScreen();
         checkPaddleCollision();
@@ -127,8 +136,8 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void checkPaddleCollision() {
-        if (Intersector.overlaps(ball.circle, paddle.rectangle)) {
-            if (paddle.rectangle.y < ball.circle.y) {
+        if (Intersector.overlaps(ball.getCircle(), paddle.getRectangle())) {
+            if (paddle.getRectangle().y < ball.getCircle().y) {
                 float paddleChunk = paddle.getWidth()/3;
                 if (ball.getPosition().x < (paddleChunk  + paddle.getPosition().x)) {
                     ball.setDirection(-1.3f, -1);
@@ -147,97 +156,55 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    private class Ball {
-        private final float radius = 15.0f;
-        private final float speed = 300;
-
-        private final Sound bounceSound;
-        private Vector2 direction = new Vector2(0.707f, 0.707f);
-        private Vector2 position = new Vector2();
-        Circle circle;
-
-        Ball(float x, float y, Sound bounceSound) {
-            this.bounceSound = bounceSound;
-            position.set(x, y);
-            circle = new Circle(position, radius);
-        }
-
-        public Vector2 getDirection() { return direction; }
-
-        public void setDirection(float x, float y) { this.direction.set(x, y); }
-
-        public Vector2 getPosition() { return position; }
-
-        public void setPosition(Vector2 position) { this.position = position; }
-
-        public float getRadius() { return radius; }
-
-        public void drawDebug(ShapeRenderer shapeRenderer) {
-            shapeRenderer.setColor(Color.valueOf("00539C"));
-            shapeRenderer.circle(position.x, position.y, radius);
-        }
-
-        public void update(float delta) {
-            if (gameBegan) {
-                Vector2 step = new Vector2(direction.x * speed * delta, direction.y * speed * delta);
-                position.add(step);
-                circle = new Circle(position, radius);
-            }
-        }
-
-        public void playBounceSound() {
-            bounceSound.play();
-        }
+    public Viewport getViewport() {
+        return viewport;
     }
 
-    private class Brick {
-        private final float width = 58.0f;
-        private final float height = 30.0f;
-
-        private float x;
-        private float y;
-
-        Brick(float x, float y) {
-            this.x = x;
-            this.y = y;
-        }
+    public boolean getGameBegan() {
+        return gameBegan;
     }
 
-    private class Paddle {
-        private static final float height = 20.0f;
-        private float width = 90;
 
-        private Vector2 position;
-        Rectangle rectangle;
+    @Override
+    public boolean keyDown(int keycode) {
+        return false;
+    }
 
-        Paddle() {
-            position = new Vector2(0, 40);
-            rectangle = new Rectangle(position.x, position.y, width, height);
-        }
+    @Override
+    public boolean keyUp(int keycode) {
+        return false;
+    }
 
-        public void drawDebug(ShapeRenderer shapeRenderer) {
-            shapeRenderer.setColor(Color.valueOf("B1EA8C"));
-            shapeRenderer.rect(position.x, position.y, width, height);
-        }
+    @Override
+    public boolean keyTyped(char character) {
+        return false;
+    }
 
-        public void update(float delta) {
-            Vector2 cursor = new Vector2();
-            viewport.unproject(cursor.set(Gdx.input.getX() - width/2, 0));
-            cursor.set(cursor.x, position.y);
-            position.interpolate(cursor, delta*3, Interpolation.fastSlow);
-            rectangle = new Rectangle(position.x, position.y, width, height);
-        }
+    @Override
+    public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
 
-        public Vector2 getPosition() {
-            return this.position;
-        }
+    @Override
+    public boolean touchUp(int screenX, int screenY, int pointer, int button) {
+        return false;
+    }
 
-        public void setPosition(float x) {
-            this.position.set(x, position.y);
-        }
+    @Override
+    public boolean touchDragged(int screenX, int screenY, int pointer) {
+        return false;
+    }
 
-        public float getWidth() {
-            return this.width;
-        }
+    @Override
+    public boolean mouseMoved(int screenX, int screenY) {
+        paddle.cursor.set(screenX, screenY);
+        viewport.unproject(paddle.cursor);
+        paddle.cursor.set(paddle.cursor.x - paddle.getWidth()/2, paddle.getPosition().y);
+        return true;
+    }
+
+    @Override
+    public boolean scrolled(int amount) {
+        return false;
     }
 }
