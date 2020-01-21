@@ -20,14 +20,14 @@ public class GameScreen extends ScreenAdapter  implements InputProcessor {
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 640;
     private final BreakoutGame breakoutGame;
-    private boolean gameBegan = false;
+    private boolean gameBegan = false; // Keeps track of game state
 
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
     private OrthographicCamera camera;
     private Texture bg;
     private SpriteBatch batch;
-    private Paddle paddle;
+    protected Paddle paddle;
     private Ball ball;
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
@@ -107,25 +107,21 @@ public class GameScreen extends ScreenAdapter  implements InputProcessor {
 
     private void stopBallLeavingTheScreen() {
         if (ball.getPosition().y - ball.getRadius() < 0) {
-            System.out.println(ball.getPosition().y - ball.getRadius() + " y");
             if (ball.getDirection().y < 0) ball.getDirection().scl(1, -1);
             ball.playBounceSound();
         }
 
         if (ball.getPosition().x - ball.getRadius() < 0) {
-            System.out.println(ball.getPosition().x - ball.getRadius() + " x");
             if (ball.getDirection().x < 0) ball.getDirection().scl(-1, 1);
             ball.playBounceSound();
         }
 
         if (ball.getPosition().x + ball.getRadius() > WORLD_WIDTH) {
-            System.out.println(ball.getPosition().x + ball.getRadius() + " x");
             if (ball.getDirection().x > 0) ball.getDirection().scl(-1, 1);
             ball.playBounceSound();
         }
 
         if (ball.getPosition().y + ball.getRadius() > WORLD_HEIGHT) {
-            System.out.println(ball.getPosition().y + ball.getRadius() + " y");
             if (ball.getDirection().y > 0) ball.getDirection().scl(1, -1);
             ball.playBounceSound();
         }
@@ -163,7 +159,6 @@ public class GameScreen extends ScreenAdapter  implements InputProcessor {
     public boolean getGameBegan() {
         return gameBegan;
     }
-
 
     @Override
     public boolean keyDown(int keycode) {
