@@ -27,6 +27,7 @@ public class GameScreen extends ScreenAdapter {
     private Texture bg;
     private SpriteBatch batch;
     private Paddle paddle;
+//    private Ball ball;
     private Ball ball;
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
@@ -41,7 +42,8 @@ public class GameScreen extends ScreenAdapter {
         bg = breakoutGame.getAssetManager().get("background.jpg");
         Sound bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
         paddle = new Paddle();
-        ball = new Ball(100, 100, bounceSound);
+//        ball = new Ball(100, 100, bounceSound);
+        ball = new Ball(100, 100, 10, bounceSound);
     }
 
     @Override
@@ -51,9 +53,9 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void render(float delta) {
-        update(delta);
         clearScreen();
         drawDebug();
+        update(delta);
     }
 
     @Override
@@ -78,13 +80,14 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         ball.drawDebug(shapeRenderer);
         paddle.drawDebug(shapeRenderer);
+//        newBall.drawDebug(shapeRenderer);
         shapeRenderer.end();
     }
 
     private void update(float delta) {
         if (!gameBegan) checkStart();
         paddle.update(delta);
-        ball.update(delta);
+        ball.move(delta);
         stopBallLeavingTheScreen();
         stopPaddleLeavingTheScreen();
         checkPaddleCollision();
@@ -97,27 +100,15 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void stopBallLeavingTheScreen() {
-        if (ball.getPosition().y - ball.getRadius() < 0) {
-            System.out.println(ball.getPosition().y - ball.getRadius() + " y");
-            if (ball.getDirection().y < 0) ball.getDirection().scl(1, -1);
+        if((ball.getDirectionVector().x < 0f && ball.x - ball.radius < 0) ||
+                (ball.getDirectionVector().x > 0f && ball.x + ball.radius > WORLD_WIDTH)) {
+            ball.getDirectionVector().scl(-1, 1);
             ball.playBounceSound();
         }
 
-        if (ball.getPosition().x - ball.getRadius() < 0) {
-            System.out.println(ball.getPosition().x - ball.getRadius() + " x");
-            if (ball.getDirection().x < 0) ball.getDirection().scl(-1, 1);
-            ball.playBounceSound();
-        }
-
-        if (ball.getPosition().x + ball.getRadius() > WORLD_WIDTH) {
-            System.out.println(ball.getPosition().x + ball.getRadius() + " x");
-            if (ball.getDirection().x > 0) ball.getDirection().scl(-1, 1);
-            ball.playBounceSound();
-        }
-
-        if (ball.getPosition().y + ball.getRadius() > WORLD_HEIGHT) {
-            System.out.println(ball.getPosition().y + ball.getRadius() + " y");
-            if (ball.getDirection().y > 0) ball.getDirection().scl(1, -1);
+        if(ball.getDirectionVector().y > 0f && ball.y + ball.radius > WORLD_HEIGHT + 0.1f)
+        {
+            ball.getDirectionVector().scl(1, -1);
             ball.playBounceSound();
         }
     }
@@ -127,67 +118,24 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void checkPaddleCollision() {
-        if (Intersector.overlaps(ball.circle, paddle.rectangle)) {
-            if (paddle.rectangle.y < ball.circle.y) {
-                float paddleChunk = paddle.getWidth()/3;
-                if (ball.getPosition().x < (paddleChunk  + paddle.getPosition().x)) {
-                    ball.setDirection(-1.3f, -1);
-                }
-                else if (ball.getPosition().x > (paddleChunk  + paddle.getPosition().x) &&
-                        ball.getPosition().x < (2*paddleChunk + paddle.getPosition().x)) {
-                    ball.setDirection(ball.getDirection().x > 0 ? 1 : -1, -1);
-                }
-                else if (ball.getPosition().x > (2*paddleChunk  + paddle.getPosition().x) &&
-                         ball.getPosition().x < (3*paddleChunk + paddle.getPosition().x)) {
-                    ball.setDirection(1.3f, -1);
-                }
-                ball.getDirection().scl(1, -1);
-                ball.playBounceSound();
-            }
-        }
-    }
-
-    private class Ball {
-        private final float radius = 15.0f;
-        private final float speed = 300;
-
-        private final Sound bounceSound;
-        private Vector2 direction = new Vector2(0.707f, 0.707f);
-        private Vector2 position = new Vector2();
-        Circle circle;
-
-        Ball(float x, float y, Sound bounceSound) {
-            this.bounceSound = bounceSound;
-            position.set(x, y);
-            circle = new Circle(position, radius);
-        }
-
-        public Vector2 getDirection() { return direction; }
-
-        public void setDirection(float x, float y) { this.direction.set(x, y); }
-
-        public Vector2 getPosition() { return position; }
-
-        public void setPosition(Vector2 position) { this.position = position; }
-
-        public float getRadius() { return radius; }
-
-        public void drawDebug(ShapeRenderer shapeRenderer) {
-            shapeRenderer.setColor(Color.valueOf("00539C"));
-            shapeRenderer.circle(position.x, position.y, radius);
-        }
-
-        public void update(float delta) {
-            if (gameBegan) {
-                Vector2 step = new Vector2(direction.x * speed * delta, direction.y * speed * delta);
-                position.add(step);
-                circle = new Circle(position, radius);
-            }
-        }
-
-        public void playBounceSound() {
-            bounceSound.play();
-        }
+//        if (Intersector.overlaps(ball.circle, paddle.rectangle)) {
+//            if (paddle.rectangle.y < ball.circle.y) {
+//                float paddleChunk = paddle.getWidth()/3;
+//                if (ball.getPosition().x < (paddleChunk  + paddle.getPosition().x)) {
+//                    ball.setDirection(-1.3f, -1);
+//                }
+//                else if (ball.getPosition().x > (paddleChunk  + paddle.getPosition().x) &&
+//                        ball.getPosition().x < (2*paddleChunk + paddle.getPosition().x)) {
+//                    ball.setDirection(ball.getDirection().x > 0 ? 1 : -1, -1);
+//                }
+//                else if (ball.getPosition().x > (2*paddleChunk  + paddle.getPosition().x) &&
+//                         ball.getPosition().x < (3*paddleChunk + paddle.getPosition().x)) {
+//                    ball.setDirection(1.3f, -1);
+//                }
+//                ball.getDirection().scl(1, -1);
+//                ball.playBounceSound();
+//            }
+//        }
     }
 
     private class Brick {
