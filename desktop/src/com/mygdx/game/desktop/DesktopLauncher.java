@@ -1,5 +1,6 @@
 package com.mygdx.game.desktop;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.mygdx.game.BreakoutGame;
@@ -7,8 +8,11 @@ import com.mygdx.game.BreakoutGame;
 public class DesktopLauncher {
 	public static void main (String[] arg) {
 		LwjglApplicationConfiguration config = new LwjglApplicationConfiguration();
-		config.width = 480;
+		config.title = "The Breakout Game";
+		config.width = 640;
 		config.height = 640;
+		config.x = 0;
+		config.y = 0;
 		new LwjglApplication(new BreakoutGame(), config);
 	}
 }
