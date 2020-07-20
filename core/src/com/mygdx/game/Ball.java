@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Ball extends Circle implements Shape {
     // ball will move 300 units per second
-    private float velocity = 300;
+    private float velocity = 460;
 
     // direction of the ball
     private Vector2 directionVector;
@@ -19,7 +19,7 @@ public class Ball extends Circle implements Shape {
 
     public Ball(float x, float y, float radius, Sound bounceSound) {
         super(x, y, radius);
-        directionVector = new Vector2( 1, 1);
+        directionVector = new Vector2( 0f, 1);
         directionVectorAngle = directionVector.angle();
         this.bounceSound = bounceSound;
     }
@@ -39,8 +39,41 @@ public class Ball extends Circle implements Shape {
         setPosition(new Vector2(x, y).mulAdd(directionVector, velocity * delta));
     }
 
+    public void followPaddle(Paddle paddle) {
+        setPosition(paddle.x + paddle.width/2, y);
+    }
+
     public void playBounceSound() {
             bounceSound.play();
+    }
+
+    // Set direction as a vector
+    public void setDirection(Vector2 direction) {
+        this.directionVector = direction;
+        this.directionVectorAngle = direction.angle();
+    }
+
+    // Set direction by angle in degrees
+    public void setDirection(float angle) {
+        this.directionVectorAngle = angle;
+        this.directionVector.setAngle(angle);
+    }
+
+    // To make game more interesting, ball will not have horizontal or vertical movements when bouncing
+    public float clampAngle(float angle) {
+        if(angle > 150f) {
+            return 150f;
+        }
+        if(angle < 30f) {
+            return 30f;
+        }
+        if(angle <= 90f && angle > 75f) {
+            return 75f;
+        }
+        if(angle >= 90f && angle < 105f) {
+            return 105f;
+        }
+        return angle;
     }
 
     public Vector2 getDirectionVector() {

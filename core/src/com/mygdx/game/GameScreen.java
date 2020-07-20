@@ -7,7 +7,6 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
@@ -16,7 +15,7 @@ import com.badlogic.gdx.utils.viewport.Viewport;
 
 public class GameScreen extends ScreenAdapter {
 
-    private static final float WORLD_WIDTH = 480;
+    private static final float WORLD_WIDTH = 640;
     private static final float WORLD_HEIGHT = 640;
     private final BreakoutGame breakoutGame;
     private boolean gameBegan = false;
@@ -24,26 +23,27 @@ public class GameScreen extends ScreenAdapter {
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
     private OrthographicCamera camera;
-    private Texture bg;
+//    private Texture bg;
     private SpriteBatch batch;
-    private Paddle paddle;
-//    private Ball ball;
+
     private Ball ball;
+    private Paddle paddle;
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
 
     @Override
     public void show() {
         camera = new OrthographicCamera();
+
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply(true);
+
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
-        bg = breakoutGame.getAssetManager().get("background.jpg");
+//        bg = breakoutGame.getAssetManager().get("background.jpg");
         Sound bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
-        paddle = new Paddle();
-//        ball = new Ball(100, 100, bounceSound);
-        ball = new Ball(100, 100, 10, bounceSound);
+        paddle = new Paddle(WORLD_WIDTH/2 - 96/2, 50, 96, 13);
+        ball = new Ball(100, paddle.y + paddle.height + 20, 10, bounceSound);
     }
 
     @Override
@@ -67,30 +67,39 @@ public class GameScreen extends ScreenAdapter {
     private void clearScreen() {
         Gdx.gl.glClearColor(Color.BLACK.r, Color.BLACK.g, Color.BLACK.b, Color.BLACK.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        batch.setProjectionMatrix(camera.projection);
-        batch.setTransformMatrix(camera.view);
-        batch.begin();
-        batch.draw(bg, 0, 0);
-        batch.end();
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+//        batch.begin();
+//        batch.draw(bg, 0, 0);
+//        batch.end();
     }
 
     private void drawDebug() {
-        shapeRenderer.setProjectionMatrix(camera.projection);
-        shapeRenderer.setTransformMatrix(camera.view);
+        batch.setProjectionMatrix(camera.combined);
+
+        // Draw the background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.valueOf("EEA47D"));
+        shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+        // Draw other objects
         ball.drawDebug(shapeRenderer);
         paddle.drawDebug(shapeRenderer);
-//        newBall.drawDebug(shapeRenderer);
         shapeRenderer.end();
     }
 
     private void update(float delta) {
-        if (!gameBegan) checkStart();
-        paddle.update(delta);
-        ball.move(delta);
-        stopBallLeavingTheScreen();
-        stopPaddleLeavingTheScreen();
-        checkPaddleCollision();
+        paddle.follow(delta, getCursorPosition());
+        if (!gameBegan) {
+            checkStart();
+            ball.followPaddle(paddle);
+        }
+        else if (gameBegan) {
+            ball.move(delta);
+            stopBallLeavingTheScreen();
+            stopPaddleLeavingTheScreen();
+            checkPaddleCollision();
+        }
     }
 
     private void checkStart() {
@@ -102,40 +111,51 @@ public class GameScreen extends ScreenAdapter {
     private void stopBallLeavingTheScreen() {
         if((ball.getDirectionVector().x < 0f && ball.x - ball.radius < 0) ||
                 (ball.getDirectionVector().x > 0f && ball.x + ball.radius > WORLD_WIDTH)) {
-            ball.getDirectionVector().scl(-1, 1);
+            ball.setDirection(ball.getDirectionVector().scl(-1,1));
             ball.playBounceSound();
         }
 
         if(ball.getDirectionVector().y > 0f && ball.y + ball.radius > WORLD_HEIGHT + 0.1f)
         {
-            ball.getDirectionVector().scl(1, -1);
+            ball.setDirection(ball.getDirectionVector().scl(1,-1));
             ball.playBounceSound();
         }
     }
 
     private void stopPaddleLeavingTheScreen() {
-        paddle.setPosition(MathUtils.clamp(paddle.getPosition().x, 0, WORLD_WIDTH - paddle.getWidth()));
+        paddle.setX(MathUtils.clamp(paddle.x, 0, WORLD_WIDTH - paddle.getWidth()));
     }
 
     private void checkPaddleCollision() {
-//        if (Intersector.overlaps(ball.circle, paddle.rectangle)) {
-//            if (paddle.rectangle.y < ball.circle.y) {
-//                float paddleChunk = paddle.getWidth()/3;
-//                if (ball.getPosition().x < (paddleChunk  + paddle.getPosition().x)) {
-//                    ball.setDirection(-1.3f, -1);
-//                }
-//                else if (ball.getPosition().x > (paddleChunk  + paddle.getPosition().x) &&
-//                        ball.getPosition().x < (2*paddleChunk + paddle.getPosition().x)) {
-//                    ball.setDirection(ball.getDirection().x > 0 ? 1 : -1, -1);
-//                }
-//                else if (ball.getPosition().x > (2*paddleChunk  + paddle.getPosition().x) &&
-//                         ball.getPosition().x < (3*paddleChunk + paddle.getPosition().x)) {
-//                    ball.setDirection(1.3f, -1);
-//                }
-//                ball.getDirection().scl(1, -1);
-//                ball.playBounceSound();
-//            }
-//        }
+        Vector2 distance = new Vector2(ball.x, ball.y).sub(paddle.x, paddle.y);
+        Vector2 scaleFactor = new Vector2(1/ paddle.width, 1/(paddle.height/paddle.width));
+
+        distance.scl(scaleFactor);
+
+        if (Intersector.overlaps(ball, paddle)) {
+            if (Math.abs(distance.x) >= Math.abs(distance.y)) {
+                // scaled delta x was larger than delta y. This is a horizontal hit.
+                ball.setDirection(ball.getDirectionVector().scl(-1, 1));
+                ball.setX(
+                        ((ball.x - (paddle.x + paddle.width/2)) >= 0) ?
+                        ball.x + ((paddle.x + paddle.width) - (ball.x - ball.radius)) :
+                        ball.x - ((ball.x + ball.radius) - paddle.x)
+                );
+            } else {
+                // This is a vertical hit.
+                // max horizontal distance between ball center and paddle center, when colliding
+                float newAngle = 180 - ((ball.x - paddle.x) * 180 ) / paddle.width;
+                ball.setDirection(ball.clampAngle(newAngle));
+            }
+        }
+
+    }
+
+    public Vector3 getCursorPosition () {
+        Vector3 cursor = new Vector3();
+        cursor.set(Gdx.input.getX(), Gdx.input.getY(), 0);
+        viewport.unproject(cursor);
+        return cursor;
     }
 
     private class Brick {
@@ -151,41 +171,4 @@ public class GameScreen extends ScreenAdapter {
         }
     }
 
-    private class Paddle {
-        private static final float height = 20.0f;
-        private float width = 90;
-
-        private Vector2 position;
-        Rectangle rectangle;
-
-        Paddle() {
-            position = new Vector2(0, 40);
-            rectangle = new Rectangle(position.x, position.y, width, height);
-        }
-
-        public void drawDebug(ShapeRenderer shapeRenderer) {
-            shapeRenderer.setColor(Color.valueOf("B1EA8C"));
-            shapeRenderer.rect(position.x, position.y, width, height);
-        }
-
-        public void update(float delta) {
-            Vector2 cursor = new Vector2();
-            viewport.unproject(cursor.set(Gdx.input.getX() - width/2, 0));
-            cursor.set(cursor.x, position.y);
-            position.interpolate(cursor, delta*3, Interpolation.fastSlow);
-            rectangle = new Rectangle(position.x, position.y, width, height);
-        }
-
-        public Vector2 getPosition() {
-            return this.position;
-        }
-
-        public void setPosition(float x) {
-            this.position.set(x, position.y);
-        }
-
-        public float getWidth() {
-            return this.width;
-        }
-    }
 }

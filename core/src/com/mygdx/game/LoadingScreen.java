@@ -62,7 +62,7 @@ public class LoadingScreen extends ScreenAdapter {
     private void update() {
         // Check if the resources are loaded proceed to game screen
         if (breakoutGame.getAssetManager().update()) {
-            breakoutGame.setScene(new GameScreen(breakoutGame));
+            breakoutGame.setScreen(new GameScreen(breakoutGame));
         } else {
             progress = breakoutGame.getAssetManager().getProgress();
         }
