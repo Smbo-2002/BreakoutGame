@@ -13,12 +13,18 @@ import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+
 public class GameScreen extends ScreenAdapter {
 
     private static final float WORLD_WIDTH = 640;
     private static final float WORLD_HEIGHT = 640;
     private final BreakoutGame breakoutGame;
     private boolean gameBegan = false;
+    private int score;
 
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
@@ -28,6 +34,8 @@ public class GameScreen extends ScreenAdapter {
 
     private Ball ball;
     private Paddle paddle;
+
+    private List<Brick> bricks = new ArrayList<>();
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
 
@@ -44,6 +52,31 @@ public class GameScreen extends ScreenAdapter {
         Sound bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
         paddle = new Paddle(WORLD_WIDTH/2 - 96/2, 50, 96, 13);
         ball = new Ball(100, paddle.y + paddle.height + 20, 10, bounceSound);
+
+        addBricks();
+    }
+
+    private void addBricks() {
+
+        int horizontal_blocks = 8;
+        int vertical_blocks = 10;
+
+        float all_blocks_width = horizontal_blocks * Brick.DEFAULT_WIDTH;
+        float all_blocks_in_between_space = (horizontal_blocks - 1) * Brick.DEFAULT_X_SPACE;
+
+        float leftPadding = (WORLD_HEIGHT - all_blocks_width - all_blocks_in_between_space) / 2;
+        float topPadding = 100;
+
+        for (int i = 0; i < horizontal_blocks; i++) {
+            for (int j = 0; j < vertical_blocks; j++) {
+                bricks.add(
+                        new Brick(
+                                leftPadding + Brick.DEFAULT_X_SPACE * i + Brick.DEFAULT_WIDTH * i,
+                                WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j)
+                        )
+                );
+            }
+        }
     }
 
     @Override
@@ -85,6 +118,9 @@ public class GameScreen extends ScreenAdapter {
         // Draw other objects
         ball.drawDebug(shapeRenderer);
         paddle.drawDebug(shapeRenderer);
+        for (Brick b: bricks) {
+            b.drawDebug(shapeRenderer);
+        }
         shapeRenderer.end();
     }
 
@@ -97,9 +133,49 @@ public class GameScreen extends ScreenAdapter {
         else if (gameBegan) {
             ball.move(delta);
             stopBallLeavingTheScreen();
-            stopPaddleLeavingTheScreen();
             checkPaddleCollision();
+            checkBrickCollision();
         }
+        stopPaddleLeavingTheScreen();
+    }
+
+    private void checkBrickCollision() {
+        Iterator<Brick> iterator = bricks.iterator();
+        while (iterator.hasNext()){
+            Brick b = iterator.next();
+            if (Intersector.overlaps(
+                    new Rectangle(
+                            ball.x-ball.radius, ball.y - ball.radius, ball.radius*2, ball.radius*2),
+                    b
+            )) {
+                Vector2 distance = new Vector2(ball.x - ball.radius, ball.y - ball.radius).sub(b.x, b.y);
+                Vector2 scaleFactor = new Vector2(1/ b.width, 1/b.height);
+
+                distance.scl(scaleFactor);
+
+                if(Math.abs(distance.x) >= Math.abs(distance.y)) {
+                    // scaled delta x was larger than delta y. This is a horizontal hit.
+                    if(Math.signum(-ball.getDirectionVector().x) == Math.signum(distance.x)) {
+                        ball.setDirection(ball.getDirectionVector().scl(-1, 1));
+                        scoreIncrement();
+                        iterator.remove();
+                    }
+                }
+                else
+                {
+                    // scaled delta y was larger than delta x. This is a vertical hit.
+                    if(Math.signum(-ball.getDirectionVector().y) == Math.signum(distance.y)) {
+                        ball.setDirection(ball.getDirectionVector().scl(1, -1));
+                         scoreIncrement();
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+    }
+
+    private void scoreIncrement() {
+        score++;
     }
 
     private void checkStart() {
@@ -123,23 +199,27 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void stopPaddleLeavingTheScreen() {
-        paddle.setX(MathUtils.clamp(paddle.x, 0, WORLD_WIDTH - paddle.getWidth()));
+        paddle.setX(MathUtils.clamp(paddle.x, 0, WORLD_WIDTH - paddle.width));
     }
 
     private void checkPaddleCollision() {
         Vector2 distance = new Vector2(ball.x, ball.y).sub(paddle.x, paddle.y);
-        Vector2 scaleFactor = new Vector2(1/ paddle.width, 1/(paddle.height/paddle.width));
+        Vector2 scaleFactor = new Vector2(1/ paddle.width, 1/paddle.height);
 
         distance.scl(scaleFactor);
 
-        if (Intersector.overlaps(ball, paddle)) {
+        if (Intersector.overlaps(
+                new Rectangle(
+                        ball.x-ball.radius, ball.y - ball.radius, ball.radius*2, ball.radius*2),
+                paddle
+        )) {
             if (Math.abs(distance.x) >= Math.abs(distance.y)) {
                 // scaled delta x was larger than delta y. This is a horizontal hit.
                 ball.setDirection(ball.getDirectionVector().scl(-1, 1));
                 ball.setX(
                         ((ball.x - (paddle.x + paddle.width/2)) >= 0) ?
-                        ball.x + ((paddle.x + paddle.width) - (ball.x - ball.radius)) :
-                        ball.x - ((ball.x + ball.radius) - paddle.x)
+                                ball.x + ((paddle.x + paddle.width) - (ball.x - ball.radius)) :
+                                ball.x - ((ball.x + ball.radius) - paddle.x)
                 );
             } else {
                 // This is a vertical hit.
@@ -156,19 +236,6 @@ public class GameScreen extends ScreenAdapter {
         cursor.set(Gdx.input.getX(), Gdx.input.getY(), 0);
         viewport.unproject(cursor);
         return cursor;
-    }
-
-    private class Brick {
-        private final float width = 58.0f;
-        private final float height = 30.0f;
-
-        private float x;
-        private float y;
-
-        Brick(float x, float y) {
-            this.x = x;
-            this.y = y;
-        }
     }
 
 }

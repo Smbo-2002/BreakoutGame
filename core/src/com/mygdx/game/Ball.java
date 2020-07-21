@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.Vector2;
 
 public class Ball extends Circle implements Shape {
     // ball will move 300 units per second
-    private float velocity = 460;
+    private float velocity = 500;
 
     // direction of the ball
     private Vector2 directionVector;
