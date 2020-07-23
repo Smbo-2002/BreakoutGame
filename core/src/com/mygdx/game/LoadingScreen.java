@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -47,6 +48,7 @@ public class LoadingScreen extends ScreenAdapter {
         // Loading the assets
         breakoutGame.getAssetManager().load("background.jpg", Texture.class);
         breakoutGame.getAssetManager().load("bounce.mp3", Sound.class);
+        breakoutGame.getAssetManager().load("font.fnt", BitmapFont.class);
     }
 
     @Override

@@ -7,9 +7,11 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -31,9 +33,11 @@ public class GameScreen extends ScreenAdapter {
     private OrthographicCamera camera;
 //    private Texture bg;
     private SpriteBatch batch;
+    Sound bounceSound;
 
     private Ball ball;
     private Paddle paddle;
+    private BitmapFont font;
 
     private List<Brick> bricks = new ArrayList<>();
 
@@ -42,16 +46,17 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void show() {
         camera = new OrthographicCamera();
-
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply(true);
 
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
 //        bg = breakoutGame.getAssetManager().get("background.jpg");
-        Sound bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
+        bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
         paddle = new Paddle(WORLD_WIDTH/2 - 96/2, 50, 96, 13);
         ball = new Ball(100, paddle.y + paddle.height + 20, 10, bounceSound);
+
+        font = breakoutGame.getAssetManager().get("font.fnt");
 
         addBricks();
     }
@@ -98,18 +103,18 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void clearScreen() {
+        viewport.getCamera().update();
+        batch.setProjectionMatrix(viewport.getCamera().combined);
         Gdx.gl.glClearColor(Color.BLACK.r, Color.BLACK.g, Color.BLACK.b, Color.BLACK.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        camera.update();
-        batch.setProjectionMatrix(camera.combined);
-//        batch.begin();
+        batch.begin();
 //        batch.draw(bg, 0, 0);
-//        batch.end();
+        batch.end();
     }
 
     private void drawDebug() {
-        batch.setProjectionMatrix(camera.combined);
-
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        shapeRenderer.setProjectionMatrix(viewport.getCamera().combined);
         // Draw the background
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("EEA47D"));
@@ -122,10 +127,15 @@ public class GameScreen extends ScreenAdapter {
             b.drawDebug(shapeRenderer);
         }
         shapeRenderer.end();
+
+        batch.begin();
+        font.draw(batch, "Score: " + score, 20, WORLD_HEIGHT-20);
+        batch.end();
     }
 
     private void update(float delta) {
         paddle.follow(delta, getCursorPosition());
+        stopPaddleLeavingTheScreen();
         if (!gameBegan) {
             checkStart();
             ball.followPaddle(paddle);
@@ -136,7 +146,6 @@ public class GameScreen extends ScreenAdapter {
             checkPaddleCollision();
             checkBrickCollision();
         }
-        stopPaddleLeavingTheScreen();
     }
 
     private void checkBrickCollision() {
@@ -191,11 +200,22 @@ public class GameScreen extends ScreenAdapter {
             ball.playBounceSound();
         }
 
-        if(ball.getDirectionVector().y > 0f && ball.y + ball.radius > WORLD_HEIGHT + 0.1f)
-        {
+        if(ball.getDirectionVector().y > 0f && ball.y + ball.radius > WORLD_HEIGHT + 0.1f) {
             ball.setDirection(ball.getDirectionVector().scl(1,-1));
             ball.playBounceSound();
         }
+
+        if (ball.getDirectionVector().y < 0 && ball.y + ball.radius < 0 + 0.1f) {
+            reset();
+        }
+    }
+
+    private void reset() {
+        score = 0;
+        gameBegan = false;
+        bricks.clear();
+        addBricks();
+        ball = new Ball(100, paddle.y + paddle.height + 20, 10, bounceSound);
     }
 
     private void stopPaddleLeavingTheScreen() {

@@ -40,7 +40,7 @@ public class Ball extends Circle implements Shape {
     }
 
     public void followPaddle(Paddle paddle) {
-        setPosition(paddle.x + paddle.width/2, y);
+        setPosition(paddle.x + paddle.width/2, paddle.y + paddle.height + 20);
     }
 
     public void playBounceSound() {
