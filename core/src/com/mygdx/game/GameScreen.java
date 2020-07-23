@@ -12,6 +12,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -19,8 +20,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-
 public class GameScreen extends ScreenAdapter {
+    public static final ArrayList<int[][]> GAME_PATTERNS = new ArrayList<>();
 
     private static final float WORLD_WIDTH = 640;
     private static final float WORLD_HEIGHT = 640;
@@ -45,6 +46,21 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
+        GAME_PATTERNS.add(
+                new int[][] {
+                        {1, 1, 1, 1, 1, 1, 1, 1},
+                        {1, 0, 0, 0, 0, 0, 0, 1},
+                        {1, 0, 1, 0, 0, 1, 0, 1},
+                        {1, 1, 1, 1, 1, 1, 1, 1},
+                        {1, 1, 0, 1, 1, 0, 1, 1},
+                        {1, 0, 1, 1, 1, 1, 0, 1},
+                        {1, 0, 1, 1, 1, 1, 0, 1},
+                        {1, 0, 1, 1, 1, 1, 0, 1},
+                        {1, 0, 1, 0, 0, 1, 0, 1},
+                        {1, 1, 1, 1, 1, 1, 1, 1},
+                }
+        );
+
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply(true);
@@ -63,8 +79,8 @@ public class GameScreen extends ScreenAdapter {
 
     private void addBricks() {
 
-        int horizontal_blocks = 8;
-        int vertical_blocks = 10;
+        int horizontal_blocks = GAME_PATTERNS.get(0)[0].length;
+        int vertical_blocks = GAME_PATTERNS.get(0).length;
 
         float all_blocks_width = horizontal_blocks * Brick.DEFAULT_WIDTH;
         float all_blocks_in_between_space = (horizontal_blocks - 1) * Brick.DEFAULT_X_SPACE;
@@ -74,10 +90,13 @@ public class GameScreen extends ScreenAdapter {
 
         for (int i = 0; i < horizontal_blocks; i++) {
             for (int j = 0; j < vertical_blocks; j++) {
+                if (GAME_PATTERNS.get(0)[j][i] == 0)
+                    continue;
                 bricks.add(
                         new Brick(
                                 leftPadding + Brick.DEFAULT_X_SPACE * i + Brick.DEFAULT_WIDTH * i,
-                                WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j)
+                                WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j),
+                                GAME_PATTERNS.get(0)[j][i]
                         )
                 );
             }
@@ -167,7 +186,10 @@ public class GameScreen extends ScreenAdapter {
                     if(Math.signum(-ball.getDirectionVector().x) == Math.signum(distance.x)) {
                         ball.setDirection(ball.getDirectionVector().scl(-1, 1));
                         scoreIncrement();
-                        iterator.remove();
+                        if (b.getHealth() == 1)
+                            iterator.remove();
+                        else
+                            b.decrementHealth();
                     }
                 }
                 else
@@ -175,8 +197,11 @@ public class GameScreen extends ScreenAdapter {
                     // scaled delta y was larger than delta x. This is a vertical hit.
                     if(Math.signum(-ball.getDirectionVector().y) == Math.signum(distance.y)) {
                         ball.setDirection(ball.getDirectionVector().scl(1, -1));
-                         scoreIncrement();
-                        iterator.remove();
+                        scoreIncrement();
+                        if (b.getHealth() == 1)
+                            iterator.remove();
+                        else
+                            b.decrementHealth();
                     }
                 }
             }
