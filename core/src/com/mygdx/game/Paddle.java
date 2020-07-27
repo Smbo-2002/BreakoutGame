@@ -1,6 +1,7 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
@@ -22,9 +23,11 @@ public class Paddle extends Rectangle implements  Shape{
     }
 
     @Override
-    public void drawDebug(ShapeRenderer shapeRenderer) {
+    public void drawDebug(ShapeRenderer shapeRenderer, Batch batch) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("B1EA8C"));
         shapeRenderer.rect(x, y, width, height);
+        shapeRenderer.end();
     }
 
     // method for paddle to follow cursor

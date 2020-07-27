@@ -1,6 +1,7 @@
 package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
@@ -29,8 +30,10 @@ public class StickyPaddle extends PowerUp {
     }
 
     @Override
-    public void drawDebug(ShapeRenderer shapeRenderer) {
+    public void drawDebug(ShapeRenderer shapeRenderer, Batch batch) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("ffffff"));
         shapeRenderer.rect(x, y, width, height);
+        shapeRenderer.end();
     }
 }

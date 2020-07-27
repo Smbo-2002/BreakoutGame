@@ -1,5 +1,6 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 public interface Shape {
@@ -8,5 +9,5 @@ public interface Shape {
     void draw();
 
     // drawDebug method draws objects with simple shapes for debugging purposes
-    void drawDebug(ShapeRenderer shape);
+    void drawDebug(ShapeRenderer shape, Batch batch);
 }

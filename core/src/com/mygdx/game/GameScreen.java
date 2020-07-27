@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
@@ -30,6 +31,8 @@ public class GameScreen extends ScreenAdapter {
     private int score;
     private boolean paddleIsExtended = false;
     private boolean paddleIsSticky = false;
+    private boolean gamePaused = false;
+    private boolean mouseControl = false;
 
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
@@ -40,10 +43,17 @@ public class GameScreen extends ScreenAdapter {
     private Timer extendedPaddleTimer = Timer.instance();
 
     private Paddle paddle;
-    private BitmapFont font;
+    private BitmapFont font_32;
+    private BitmapFont font_18;
     private ArrayList<Ball> balls = new ArrayList<>();
     private List<Brick> bricks = new ArrayList<>();
     private List<PowerUp> powerUps = new ArrayList<>();
+    private PauseDialog pauseDialog = new PauseDialog(
+            (WORLD_WIDTH - PauseDialog.DEF_WIDTH) /  2f,
+            180f,
+            PauseDialog.DEF_WIDTH,
+            PauseDialog.DEF_HEIGHT,
+            this);
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
 
@@ -75,7 +85,8 @@ public class GameScreen extends ScreenAdapter {
         paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT);
         balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
 
-        font = breakoutGame.getAssetManager().get("font.fnt");
+        font_32 = breakoutGame.getAssetManager().get("font_32.fnt");
+        font_18 = breakoutGame.getAssetManager().get("font_18.fnt");
 
         addBricks();
     }
@@ -151,24 +162,52 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("EEA47D"));
         shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        shapeRenderer.end();
 
         // Draw other objects
         for (Ball ball : balls)
-            ball.drawDebug(shapeRenderer);
-        paddle.drawDebug(shapeRenderer);
+            ball.drawDebug(shapeRenderer, batch);
+        paddle.drawDebug(shapeRenderer, batch);
         for (Brick b: bricks)
-            b.drawDebug(shapeRenderer);
+            b.drawDebug(shapeRenderer, batch);
         for (PowerUp p: powerUps)
-            p.drawDebug(shapeRenderer);
-        shapeRenderer.end();
+            p.drawDebug(shapeRenderer, batch);
+
+        if (gamePaused) {
+            pauseDialog.drawDebug(shapeRenderer, batch);
+        }
+
 
         batch.begin();
-        font.draw(batch, "Score: " + score, 20, WORLD_HEIGHT-20);
+        font_32.setColor(255, 255, 255, 1);
+        font_32.draw(batch, "Score: " + score, 20, WORLD_HEIGHT-20);
+
+        font_18.setColor(255, 255, 255, 0.7f);
+        GlyphLayout layout = new GlyphLayout();
+        layout.setText(font_18, "press p to pause...");
+        font_18.draw(batch, layout, WORLD_WIDTH - layout.width - 20, WORLD_HEIGHT-20);
+
         batch.end();
     }
 
+
+
     private void update(float delta) {
-        paddle.follow(delta, getCursorPosition());
+        checkUnpause();
+        checkPaused();
+        if (gamePaused) {
+            pauseDialog.changeControl(delta);
+            return;
+        }
+        if (mouseControl)
+            paddle.follow(delta, getCursorPosition());
+        else {
+            if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+                paddle.moveLeft(delta);
+            } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+                paddle.moveRight(delta);
+            }
+        }
         stopPaddleLeavingTheScreen();
         if (paddleIsSticky) {
             for (Ball ball: balls)
@@ -260,6 +299,16 @@ public class GameScreen extends ScreenAdapter {
         boolean isTouched = Gdx.input.isTouched();
         boolean isAPressed = Gdx.input.isKeyPressed(Input.Keys.SPACE);
         if (isTouched || isAPressed) paddleIsSticky = false;
+    }
+
+    private void checkPaused() {
+        boolean isAPressed = Gdx.input.isKeyPressed(Input.Keys.P);
+        if (isAPressed) gamePaused = true;
+    }
+
+    private void checkUnpause() {
+        boolean isAPressed = Gdx.input.isKeyPressed(Input.Keys.C);
+        if (isAPressed) gamePaused = false;
     }
 
     private void stopBallLeavingTheScreen() {
@@ -386,5 +435,25 @@ public class GameScreen extends ScreenAdapter {
 
     public List<Ball> getBalls () {
         return balls;
+    }
+
+    public BitmapFont getFont_18 () {
+        return font_18;
+    }
+
+    public BitmapFont getFont_32 () {
+        return font_32;
+    }
+
+    public Viewport getViewport() {
+        return viewport;
+    }
+
+    public boolean isMouseControl() {
+        return mouseControl;
+    }
+
+    public void setMouseControl(boolean mouseControl) {
+        this.mouseControl = mouseControl;
     }
 }

@@ -2,6 +2,7 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
@@ -27,9 +28,11 @@ public class Ball extends Circle implements Shape {
     }
 
     @Override
-    public void drawDebug(ShapeRenderer shapeRenderer) {
+    public void drawDebug(ShapeRenderer shapeRenderer, Batch batch) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("00539C"));
         shapeRenderer.circle(x, y, radius);
+        shapeRenderer.end();
     }
 
     @Override
