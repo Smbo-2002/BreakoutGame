@@ -12,7 +12,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
@@ -28,19 +28,22 @@ public class GameScreen extends ScreenAdapter {
     private final BreakoutGame breakoutGame;
     private boolean gameBegan = false;
     private int score;
+    private boolean paddleIsExtended = false;
+    private boolean paddleIsSticky = false;
 
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
     private OrthographicCamera camera;
 //    private Texture bg;
     private SpriteBatch batch;
-    Sound bounceSound;
+    public Sound bounceSound;
+    private Timer extendedPaddleTimer = Timer.instance();
 
-    private Ball ball;
     private Paddle paddle;
     private BitmapFont font;
-
+    private ArrayList<Ball> balls = new ArrayList<>();
     private List<Brick> bricks = new ArrayList<>();
+    private List<PowerUp> powerUps = new ArrayList<>();
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
 
@@ -69,8 +72,8 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer = new ShapeRenderer();
 //        bg = breakoutGame.getAssetManager().get("background.jpg");
         bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
-        paddle = new Paddle(WORLD_WIDTH/2 - 96/2, 50, 96, 13);
-        ball = new Ball(100, paddle.y + paddle.height + 20, 10, bounceSound);
+        paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT);
+        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
 
         font = breakoutGame.getAssetManager().get("font.fnt");
 
@@ -92,11 +95,21 @@ public class GameScreen extends ScreenAdapter {
             for (int j = 0; j < vertical_blocks; j++) {
                 if (GAME_PATTERNS.get(0)[j][i] == 0)
                     continue;
+                float x = leftPadding + Brick.DEFAULT_X_SPACE * i + Brick.DEFAULT_WIDTH * i;
+                float y = WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j);
                 bricks.add(
                         new Brick(
-                                leftPadding + Brick.DEFAULT_X_SPACE * i + Brick.DEFAULT_WIDTH * i,
-                                WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j),
-                                GAME_PATTERNS.get(0)[j][i]
+                                x,
+                                y,
+                                GAME_PATTERNS.get(0)[j][i],
+                                (float) Math.random() < PowerUp.DROP_PROBABILITY ?
+                                        RandomPowerUpGenerator.next(
+                                                x,
+                                                y,
+                                                PowerUp.DEF_WIDTH,
+                                                PowerUp.DEF_HEIGHT,
+                                                this
+                                        ) : null
                         )
                 );
             }
@@ -140,11 +153,13 @@ public class GameScreen extends ScreenAdapter {
         shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
         // Draw other objects
-        ball.drawDebug(shapeRenderer);
+        for (Ball ball : balls)
+            ball.drawDebug(shapeRenderer);
         paddle.drawDebug(shapeRenderer);
-        for (Brick b: bricks) {
+        for (Brick b: bricks)
             b.drawDebug(shapeRenderer);
-        }
+        for (PowerUp p: powerUps)
+            p.drawDebug(shapeRenderer);
         shapeRenderer.end();
 
         batch.begin();
@@ -155,53 +170,68 @@ public class GameScreen extends ScreenAdapter {
     private void update(float delta) {
         paddle.follow(delta, getCursorPosition());
         stopPaddleLeavingTheScreen();
+        if (paddleIsSticky) {
+            for (Ball ball: balls)
+                ball.followPaddle(paddle);
+                checkStickiness();
+            return;
+        }
         if (!gameBegan) {
             checkStart();
-            ball.followPaddle(paddle);
+            if (!balls.isEmpty())
+                balls.get(0).followPaddle(paddle);
         }
         else if (gameBegan) {
-            ball.move(delta);
+            for (Ball ball : balls)
+                ball.move(delta);
             stopBallLeavingTheScreen();
+            for(PowerUp p: powerUps)
+                p.update(delta);
             checkPaddleCollision();
             checkBrickCollision();
         }
     }
 
     private void checkBrickCollision() {
-        Iterator<Brick> iterator = bricks.iterator();
-        while (iterator.hasNext()){
-            Brick b = iterator.next();
-            if (Intersector.overlaps(
-                    new Rectangle(
-                            ball.x-ball.radius, ball.y - ball.radius, ball.radius*2, ball.radius*2),
-                    b
-            )) {
-                Vector2 distance = new Vector2(ball.x - ball.radius, ball.y - ball.radius).sub(b.x, b.y);
-                Vector2 scaleFactor = new Vector2(1/ b.width, 1/b.height);
+        for (Ball ball : balls) {
+            Iterator<Brick> iterator = bricks.iterator();
+            while (iterator.hasNext()) {
+                Brick b = iterator.next();
+                if (Intersector.overlaps(
+                        new Rectangle(
+                                ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2),
+                        b
+                )) {
+                    // Check for powerUps
+                    if (b.hasPowerUp())
+                        powerUps.add(b.getPowerUp());
 
-                distance.scl(scaleFactor);
+                    // Check for side collision
+                    Vector2 distance = new Vector2(ball.x - ball.radius, ball.y - ball.radius).sub(b.x, b.y);
+                    Vector2 scaleFactor = new Vector2(1 / b.width, 1 / b.height);
 
-                if(Math.abs(distance.x) >= Math.abs(distance.y)) {
-                    // scaled delta x was larger than delta y. This is a horizontal hit.
-                    if(Math.signum(-ball.getDirectionVector().x) == Math.signum(distance.x)) {
-                        ball.setDirection(ball.getDirectionVector().scl(-1, 1));
-                        scoreIncrement();
-                        if (b.getHealth() == 1)
-                            iterator.remove();
-                        else
-                            b.decrementHealth();
-                    }
-                }
-                else
-                {
-                    // scaled delta y was larger than delta x. This is a vertical hit.
-                    if(Math.signum(-ball.getDirectionVector().y) == Math.signum(distance.y)) {
-                        ball.setDirection(ball.getDirectionVector().scl(1, -1));
-                        scoreIncrement();
-                        if (b.getHealth() == 1)
-                            iterator.remove();
-                        else
-                            b.decrementHealth();
+                    distance.scl(scaleFactor);
+
+                    if (Math.abs(distance.x) >= Math.abs(distance.y)) {
+                        // scaled delta x was larger than delta y. This is a horizontal hit.
+                        if (Math.signum(-ball.getDirectionVector().x) == Math.signum(distance.x)) {
+                            ball.setDirection(ball.getDirectionVector().scl(-1, 1));
+                            scoreIncrement();
+                            if (b.getHealth() == 1)
+                                iterator.remove();
+                            else
+                                b.decrementHealth();
+                        }
+                    } else {
+                        // scaled delta y was larger than delta x. This is a vertical hit.
+                        if (Math.signum(-ball.getDirectionVector().y) == Math.signum(distance.y)) {
+                            ball.setDirection(ball.getDirectionVector().scl(1, -1));
+                            scoreIncrement();
+                            if (b.getHealth() == 1)
+                                iterator.remove();
+                            else
+                                b.decrementHealth();
+                        }
                     }
                 }
             }
@@ -209,7 +239,15 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void scoreIncrement() {
-        score++;
+        setScore(score + 1);
+    }
+
+    public void setScore(int score) {
+        this.score = score;
+    }
+
+    public int getScore() {
+        return score;
     }
 
     private void checkStart() {
@@ -218,20 +256,33 @@ public class GameScreen extends ScreenAdapter {
         if (isTouched || isAPressed) gameBegan = true;
     }
 
+    private void checkStickiness() {
+        boolean isTouched = Gdx.input.isTouched();
+        boolean isAPressed = Gdx.input.isKeyPressed(Input.Keys.SPACE);
+        if (isTouched || isAPressed) paddleIsSticky = false;
+    }
+
     private void stopBallLeavingTheScreen() {
-        if((ball.getDirectionVector().x < 0f && ball.x - ball.radius < 0) ||
-                (ball.getDirectionVector().x > 0f && ball.x + ball.radius > WORLD_WIDTH)) {
-            ball.setDirection(ball.getDirectionVector().scl(-1,1));
-            ball.playBounceSound();
-        }
+        Iterator<Ball> ballIterator = balls.iterator();
+        while (ballIterator.hasNext()){
+            Ball ball = ballIterator.next();
+            if ((ball.getDirectionVector().x < 0f && ball.x - ball.radius < 0) ||
+                    (ball.getDirectionVector().x > 0f && ball.x + ball.radius > WORLD_WIDTH)) {
+                ball.setDirection(ball.getDirectionVector().scl(-1, 1));
+                ball.playBounceSound();
+            }
 
-        if(ball.getDirectionVector().y > 0f && ball.y + ball.radius > WORLD_HEIGHT + 0.1f) {
-            ball.setDirection(ball.getDirectionVector().scl(1,-1));
-            ball.playBounceSound();
-        }
+            if (ball.getDirectionVector().y > 0f && ball.y + ball.radius > WORLD_HEIGHT + 0.1f) {
+                ball.setDirection(ball.getDirectionVector().scl(1, -1));
+                ball.playBounceSound();
+            }
 
-        if (ball.getDirectionVector().y < 0 && ball.y + ball.radius < 0 + 0.1f) {
-            reset();
+            if (ball.getDirectionVector().y < 0 && ball.y + ball.radius < 0 + 0.1f) {
+                if (balls.size() == 1)
+                    reset();
+                else
+                    ballIterator.remove();
+            }
         }
     }
 
@@ -240,7 +291,12 @@ public class GameScreen extends ScreenAdapter {
         gameBegan = false;
         bricks.clear();
         addBricks();
-        ball = new Ball(100, paddle.y + paddle.height + 20, 10, bounceSound);
+        balls.clear();
+        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
+        powerUps.clear();
+        paddleIsExtended = false;
+        extendedPaddleTimer.clear();
+        paddle.width = Paddle.DEF_WIDTH;
     }
 
     private void stopPaddleLeavingTheScreen() {
@@ -248,32 +304,53 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void checkPaddleCollision() {
-        Vector2 distance = new Vector2(ball.x, ball.y).sub(paddle.x, paddle.y);
-        Vector2 scaleFactor = new Vector2(1/ paddle.width, 1/paddle.height);
+        // Check paddle collision with balls
+        for (Ball ball: balls) {
+            Vector2 distance = new Vector2(ball.x, ball.y).sub(paddle.x, paddle.y);
+            Vector2 scaleFactor = new Vector2(1 / paddle.width, 1 / paddle.height);
 
-        distance.scl(scaleFactor);
+            distance.scl(scaleFactor);
 
-        if (Intersector.overlaps(
-                new Rectangle(
-                        ball.x-ball.radius, ball.y - ball.radius, ball.radius*2, ball.radius*2),
-                paddle
-        )) {
-            if (Math.abs(distance.x) >= Math.abs(distance.y)) {
-                // scaled delta x was larger than delta y. This is a horizontal hit.
-                ball.setDirection(ball.getDirectionVector().scl(-1, 1));
-                ball.setX(
-                        ((ball.x - (paddle.x + paddle.width/2)) >= 0) ?
-                                ball.x + ((paddle.x + paddle.width) - (ball.x - ball.radius)) :
-                                ball.x - ((ball.x + ball.radius) - paddle.x)
-                );
-            } else {
-                // This is a vertical hit.
-                // max horizontal distance between ball center and paddle center, when colliding
-                float newAngle = 180 - ((ball.x - paddle.x) * 180 ) / paddle.width;
-                ball.setDirection(ball.clampAngle(newAngle));
+            if (Intersector.overlaps(
+                    new Rectangle(
+                            ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2),
+                    paddle
+            )) {
+                if (Math.abs(distance.x) >= Math.abs(distance.y)) {
+                    // scaled delta x was larger than delta y. This is a horizontal hit.
+                    ball.setDirection(ball.getDirectionVector().scl(-1, 1));
+                    ball.setX(
+                            ((ball.x - (paddle.x + paddle.width / 2)) >= 0) ?
+                                    ball.x + ((paddle.x + paddle.width) - (ball.x - ball.radius)) :
+                                    ball.x - ((ball.x + ball.radius) - paddle.x)
+                    );
+                } else {
+                    // This is a vertical hit.
+                    // max horizontal distance between ball center and paddle center, when colliding
+                    float newAngle = 180 - ((ball.x - paddle.x) * 180) / paddle.width;
+                    ball.setDirection(ball.clampAngle(newAngle));
+                }
             }
         }
 
+        // Check paddle collision with powerUps
+
+        Iterator<PowerUp> powerUpIterator = powerUps.iterator();
+        while (powerUpIterator.hasNext()) {
+            PowerUp p = powerUpIterator.next();
+            if (Intersector.overlaps(p, paddle)) {
+                p.activate();
+                powerUpIterator.remove();
+            }
+        }
+    }
+
+    public void addBall(Ball b) {
+        balls.add(b);
+    }
+
+    public Paddle getPaddle() {
+        return paddle;
     }
 
     public Vector3 getCursorPosition () {
@@ -283,4 +360,31 @@ public class GameScreen extends ScreenAdapter {
         return cursor;
     }
 
+    public boolean isPaddleExtended() {
+        return paddleIsExtended;
+    }
+
+    public void setPaddleIsExtended(boolean paddleIsExtended) {
+        this.paddleIsExtended = paddleIsExtended;
+    }
+
+    public Timer getExtendedPaddleTimer() {
+        return extendedPaddleTimer;
+    }
+
+    public boolean isPaddleSticky() {
+        return paddleIsSticky;
+    }
+
+    public void setPaddleIsSticky(boolean paddleIsSticky) {
+        this.paddleIsSticky = paddleIsSticky;
+    }
+
+    public List<PowerUp> getPowerUps () {
+        return powerUps;
+    }
+
+    public List<Ball> getBalls () {
+        return balls;
+    }
 }

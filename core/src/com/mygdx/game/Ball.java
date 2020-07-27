@@ -7,6 +7,8 @@ import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
 
 public class Ball extends Circle implements Shape {
+    public static float DEF_RADIUS = 10f;
+
     // ball will move 300 units per second
     private float velocity = 500;
 

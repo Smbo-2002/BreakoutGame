@@ -6,8 +6,11 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
 public class Paddle extends Rectangle implements  Shape{
+    public final static float DEF_WIDTH = 96;
+    public final static float DEF_HEIGHT = 13;
+
     // how many units/second can paddle move
-    float velocity = 768f;
+    float velocity = 800f;
 
     public Paddle(float x, float y, float width, float height) {
         super(x, y, width, height);
