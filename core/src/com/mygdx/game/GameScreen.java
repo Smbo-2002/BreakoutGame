@@ -17,49 +17,15 @@ import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
 public class GameScreen extends ScreenAdapter {
-    public static final ArrayList<int[][]> GAME_PATTERNS = new ArrayList<>();
-
-    private static final float WORLD_WIDTH = 640;
-    private static final float WORLD_HEIGHT = 640;
-    private final BreakoutGame breakoutGame;
-    private boolean gameBegan = false;
-    private int score;
-    private boolean paddleIsExtended = false;
-    private boolean paddleIsSticky = false;
-    private boolean gamePaused = false;
-    private boolean mouseControl = false;
-
-    private ShapeRenderer shapeRenderer;
-    private Viewport viewport;
-    private OrthographicCamera camera;
-//    private Texture bg;
-    private SpriteBatch batch;
-    public Sound bounceSound;
-    private Timer extendedPaddleTimer = Timer.instance();
-
-    private Paddle paddle;
-    private BitmapFont font_32;
-    private BitmapFont font_18;
-    private ArrayList<Ball> balls = new ArrayList<>();
-    private List<Brick> bricks = new ArrayList<>();
-    private List<PowerUp> powerUps = new ArrayList<>();
-    private PauseDialog pauseDialog = new PauseDialog(
-            (WORLD_WIDTH - PauseDialog.DEF_WIDTH) /  2f,
-            180f,
-            PauseDialog.DEF_WIDTH,
-            PauseDialog.DEF_HEIGHT,
-            this);
-
-    GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
-
-    @Override
-    public void show() {
-        GAME_PATTERNS.add(
+    public static final ArrayList<int[][]> GAME_PATTERNS = new ArrayList<>(
+            Arrays.asList(
                 new int[][] {
                         {1, 1, 1, 1, 1, 1, 1, 1},
                         {1, 0, 0, 0, 0, 0, 0, 1},
@@ -71,8 +37,113 @@ public class GameScreen extends ScreenAdapter {
                         {1, 0, 1, 1, 1, 1, 0, 1},
                         {1, 0, 1, 0, 0, 1, 0, 1},
                         {1, 1, 1, 1, 1, 1, 1, 1},
-                }
-        );
+            },
+                    new int[][] {
+                            {1, 1, 1, 1, 1, 1, 1, 1},
+                            {1, 1, 0, 1, 0, 1, 0, 1},
+                            {1, 0, 0, 0, 0, 0, 0, 1},
+                            {1, 1, 1, 1, 1, 1, 1, 1},
+                            {1, 1, 1, 1, 1, 1, 1, 1},
+                            {1, 0, 1, 1, 1, 1, 0, 1},
+                            {1, 0, 1, 1, 1, 1, 0, 1},
+                            {1, 1, 1, 1, 1, 1, 1, 1},
+                            {1, 0, 1, 0, 0, 1, 0, 1},
+                            {1, 0, 0, 0, 0, 0, 0, 1},
+                    },
+                    new int[][] {
+                            {1, 1, 1, 1, 1, 1, 1, 1},
+                            {1, 1, 0, 0, 0, 0, 0, 1},
+                            {1, 0, 1, 0, 0, 0, 0, 1},
+                            {1, 0, 1, 1, 0, 0, 1, 1},
+                            {1, 1, 0, 1, 1, 0, 1, 1},
+                            {1, 0, 1, 1, 1, 1, 0, 1},
+                            {1, 0, 1, 1, 1, 1, 1, 1},
+                            {1, 0, 1, 1, 1, 1, 0, 1},
+                            {1, 1, 1, 1, 1, 1, 2, 1},
+                            {1, 1, 1, 1, 1, 1, 1, 1},
+                    })
+//            Arrays.asList(
+//                    new int[][] {
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 1, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                    },
+//                    new int[][] {
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 1, 1, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                    },
+//                    new int[][] {
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 1, 1, 1, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                            {0, 0, 0, 0, 0, 0, 0, 0},
+//                    }
+//            )
+    );
+
+    public static final float WORLD_WIDTH = 640;
+    public static final float WORLD_HEIGHT = 640;
+
+    private final BreakoutGame breakoutGame;
+
+    // Player progress
+    private int score;
+    private int level = 0;
+
+    // Game state
+    private boolean gameBegan = false;
+    private boolean paddleIsExtended = false;
+    private boolean paddleIsSticky = false;
+    private boolean gamePaused = false;
+    private boolean mouseControl = true;
+    private boolean gameWon = false;
+
+    private ShapeRenderer shapeRenderer;
+    private SpriteBatch batch;
+    private Viewport viewport;
+    private OrthographicCamera camera;
+
+    // Assets
+    // private Texture bg;
+    public Sound bounceSound;
+    private BitmapFont font_32;
+    private BitmapFont font_18;
+    private BitmapFont font_64;
+
+    // Game objects
+    private Paddle paddle;
+    private ArrayList<Ball> balls = new ArrayList<>();
+    private List<Brick> bricks = new ArrayList<>();
+    private List<PowerUp> powerUps = new ArrayList<>();
+
+    private PauseDialog pauseDialog;
+    private LevelDialog levelDialog;
+
+    GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
+
+    @Override
+    public void show() {
 
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
@@ -80,51 +151,26 @@ public class GameScreen extends ScreenAdapter {
 
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
+
 //        bg = breakoutGame.getAssetManager().get("background.jpg");
         bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
-        paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT);
-        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
-
         font_32 = breakoutGame.getAssetManager().get("font_32.fnt");
         font_18 = breakoutGame.getAssetManager().get("font_18.fnt");
+        font_64 = breakoutGame.getAssetManager().get("font_64.fnt");
 
+        paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT);
+        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
         addBricks();
-    }
 
-    private void addBricks() {
+        pauseDialog = new PauseDialog(
+                (WORLD_WIDTH - PauseDialog.DEF_WIDTH) /  2f,
+                180f,
+                PauseDialog.DEF_WIDTH,
+                PauseDialog.DEF_HEIGHT,
+                this);
 
-        int horizontal_blocks = GAME_PATTERNS.get(0)[0].length;
-        int vertical_blocks = GAME_PATTERNS.get(0).length;
-
-        float all_blocks_width = horizontal_blocks * Brick.DEFAULT_WIDTH;
-        float all_blocks_in_between_space = (horizontal_blocks - 1) * Brick.DEFAULT_X_SPACE;
-
-        float leftPadding = (WORLD_HEIGHT - all_blocks_width - all_blocks_in_between_space) / 2;
-        float topPadding = 100;
-
-        for (int i = 0; i < horizontal_blocks; i++) {
-            for (int j = 0; j < vertical_blocks; j++) {
-                if (GAME_PATTERNS.get(0)[j][i] == 0)
-                    continue;
-                float x = leftPadding + Brick.DEFAULT_X_SPACE * i + Brick.DEFAULT_WIDTH * i;
-                float y = WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j);
-                bricks.add(
-                        new Brick(
-                                x,
-                                y,
-                                GAME_PATTERNS.get(0)[j][i],
-                                (float) Math.random() < PowerUp.DROP_PROBABILITY ?
-                                        RandomPowerUpGenerator.next(
-                                                x,
-                                                y,
-                                                PowerUp.DEF_WIDTH,
-                                                PowerUp.DEF_HEIGHT,
-                                                this
-                                        ) : null
-                        )
-                );
-            }
-        }
+        levelDialog = new LevelDialog(this);
+        levelDialog.setVisible();
     }
 
     @Override
@@ -177,6 +223,8 @@ public class GameScreen extends ScreenAdapter {
             pauseDialog.drawDebug(shapeRenderer, batch);
         }
 
+        levelDialog.drawDebug(shapeRenderer, batch);
+
 
         batch.begin();
         font_32.setColor(255, 255, 255, 1);
@@ -197,6 +245,16 @@ public class GameScreen extends ScreenAdapter {
         checkPaused();
         if (gamePaused) {
             pauseDialog.changeControl(delta);
+            return;
+        }
+        if (gameWon)
+            return;
+        if (isLevelCompleted()){
+                if (level < ( GAME_PATTERNS.size() - 1 )) {
+                    level++;
+                    reset(false);
+                }
+                levelDialog.setVisible();
             return;
         }
         if (mouseControl)
@@ -228,6 +286,42 @@ public class GameScreen extends ScreenAdapter {
                 p.update(delta);
             checkPaddleCollision();
             checkBrickCollision();
+        }
+    }
+
+    private void addBricks() {
+
+        int horizontal_blocks = GAME_PATTERNS.get(level)[0].length;
+        int vertical_blocks = GAME_PATTERNS.get(level).length;
+
+        float all_blocks_width = horizontal_blocks * Brick.DEFAULT_WIDTH;
+        float all_blocks_in_between_space = (horizontal_blocks - 1) * Brick.DEFAULT_X_SPACE;
+
+        float leftPadding = (WORLD_HEIGHT - all_blocks_width - all_blocks_in_between_space) / 2;
+        float topPadding = 100;
+
+        for (int i = 0; i < horizontal_blocks; i++) {
+            for (int j = 0; j < vertical_blocks; j++) {
+                if (GAME_PATTERNS.get(level)[j][i] == 0)
+                    continue;
+                float x = leftPadding + Brick.DEFAULT_X_SPACE * i + Brick.DEFAULT_WIDTH * i;
+                float y = WORLD_HEIGHT - (topPadding + Brick.DEFAULT_HEIGHT * j + Brick.DEFAULT_Y_SPACE*j);
+                bricks.add(
+                        new Brick(
+                                x,
+                                y,
+                                GAME_PATTERNS.get(level)[j][i],
+                                (float) Math.random() < PowerUp.DROP_PROBABILITY ?
+                                        RandomPowerUpGenerator.next(
+                                                x,
+                                                y,
+                                                PowerUp.DEF_WIDTH,
+                                                PowerUp.DEF_HEIGHT,
+                                                this
+                                        ) : null
+                        )
+                );
+            }
         }
     }
 
@@ -328,15 +422,21 @@ public class GameScreen extends ScreenAdapter {
 
             if (ball.getDirectionVector().y < 0 && ball.y + ball.radius < 0 + 0.1f) {
                 if (balls.size() == 1)
-                    reset();
+                    reset(true);
                 else
                     ballIterator.remove();
             }
         }
     }
 
-    private void reset() {
-        score = 0;
+    public void reset(boolean fullReset) {
+        if (fullReset) {
+            score = 0;
+            level = 0;
+            Timer.instance().clear();
+            gameWon = false;
+            levelDialog.setVisible();
+        }
         gameBegan = false;
         bricks.clear();
         addBricks();
@@ -344,7 +444,6 @@ public class GameScreen extends ScreenAdapter {
         balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
         powerUps.clear();
         paddleIsExtended = false;
-        extendedPaddleTimer.clear();
         paddle.width = Paddle.DEF_WIDTH;
     }
 
@@ -417,10 +516,6 @@ public class GameScreen extends ScreenAdapter {
         this.paddleIsExtended = paddleIsExtended;
     }
 
-    public Timer getExtendedPaddleTimer() {
-        return extendedPaddleTimer;
-    }
-
     public boolean isPaddleSticky() {
         return paddleIsSticky;
     }
@@ -455,5 +550,32 @@ public class GameScreen extends ScreenAdapter {
 
     public void setMouseControl(boolean mouseControl) {
         this.mouseControl = mouseControl;
+    }
+
+    private boolean isLevelCompleted() {
+        return bricks.size() == 0;
+    }
+
+    public BitmapFont getFont_64() {
+        return font_64;
+    }
+
+    public int getLevel() {
+        return level;
+    }
+    public void setLevel(int level) {
+        this.level = level;
+    }
+
+    public List<Brick> getBricks() {
+        return bricks;
+    }
+
+    public boolean isGameWon() {
+        return gameWon;
+    }
+
+    public void setGameWon(boolean gameWon) {
+        this.gameWon = gameWon;
     }
 }

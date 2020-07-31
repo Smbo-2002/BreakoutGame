@@ -50,6 +50,7 @@ public class LoadingScreen extends ScreenAdapter {
         breakoutGame.getAssetManager().load("bounce.mp3", Sound.class);
         breakoutGame.getAssetManager().load("font_32.fnt", BitmapFont.class);
         breakoutGame.getAssetManager().load("font_18.fnt", BitmapFont.class);
+        breakoutGame.getAssetManager().load("font_64.fnt", BitmapFont.class);
     }
 
     @Override

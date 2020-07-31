@@ -19,10 +19,9 @@ public class ExtendPaddle extends PowerUp {
             gameScreen.getPaddle().setWidth(gameScreen.getPaddle().getWidth()*2);
         else {
             gameScreen.setScore(gameScreen.getScore() + POWER_UP_BONUS);
-            gameScreen.getExtendedPaddleTimer().clear();
         }
         gameScreen.setPaddleIsExtended(true);
-        gameScreen.getExtendedPaddleTimer().scheduleTask(new Timer.Task() {
+        Timer.instance().scheduleTask(new Timer.Task() {
             @Override
             public void run() {
                 gameScreen.setPaddleIsExtended(false);
