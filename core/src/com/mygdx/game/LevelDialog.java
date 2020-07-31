@@ -60,6 +60,7 @@ public class LevelDialog implements Shape {
             public void run() {
                 visible = false;
                 if (gameScreen.isGameWon())
+                    inFinalLevel = false;
                     gameScreen.reset(true);
             }
         },1);
