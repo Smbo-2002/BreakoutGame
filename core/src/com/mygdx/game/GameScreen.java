@@ -104,12 +104,14 @@ public class GameScreen extends ScreenAdapter {
 
     public static final float WORLD_WIDTH = 640;
     public static final float WORLD_HEIGHT = 640;
+    public static final int BASE_HEALTH = 3;
 
     private final BreakoutGame breakoutGame;
 
     // Player progress
     private int score;
     private int level = 0;
+    private int health = BASE_HEALTH;
 
     // Game state
     private boolean gameBegan = false;
@@ -230,8 +232,13 @@ public class GameScreen extends ScreenAdapter {
         font_32.setColor(255, 255, 255, 1);
         font_32.draw(batch, "Score: " + score, 20, WORLD_HEIGHT-20);
 
-        font_18.setColor(255, 255, 255, 0.7f);
         GlyphLayout layout = new GlyphLayout();
+        font_32.setColor(255, 255, 255, 1);
+        layout.setText(font_32, BASE_HEALTH + "/" + health);
+        font_32.draw(batch, layout, WORLD_WIDTH/2 - layout.width/2, WORLD_HEIGHT-20);
+
+        font_18.setColor(255, 255, 255, 0.7f);
+        layout = new GlyphLayout();
         layout.setText(font_18, "press p to pause...");
         font_18.draw(batch, layout, WORLD_WIDTH - layout.width - 20, WORLD_HEIGHT-20);
 
@@ -421,8 +428,14 @@ public class GameScreen extends ScreenAdapter {
             }
 
             if (ball.getDirectionVector().y < 0 && ball.y + ball.radius < 0 + 0.1f) {
-                if (balls.size() == 1)
+                if (balls.size() == 1 && health == 0)
                     reset(true);
+                else if (balls.size() == 1 && health > 0) {
+                    balls.clear();
+                    balls.add(new Ball(paddle.x + paddle.width/2, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
+                    gameBegan = false;
+                    health--;
+                }
                 else
                     ballIterator.remove();
             }
@@ -436,6 +449,7 @@ public class GameScreen extends ScreenAdapter {
             Timer.instance().clear();
             gameWon = false;
             levelDialog.setVisible();
+            health = BASE_HEALTH;
         }
         gameBegan = false;
         bricks.clear();
