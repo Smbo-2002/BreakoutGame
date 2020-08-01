@@ -9,11 +9,12 @@ import com.badlogic.gdx.math.Rectangle;
 import java.util.Objects;
 
 public class Brick extends Rectangle implements Shape {
-    public static final float DEFAULT_WIDTH = 64;
-    public static final float DEFAULT_HEIGHT = 18;
-    public static final float DEFAULT_X_SPACE = 15;
-    public static final float DEFAULT_Y_SPACE = 10;
-    private int health;
+    public static final float DEFAULT_WIDTH = 74;
+    public static final float DEFAULT_HEIGHT = 20;
+    public static final float DEFAULT_X_SPACE = 5;
+    public static final float DEFAULT_Y_SPACE = 5;
+    private int base_health = -1;
+    private int health = base_health;
     private PowerUp powerUp;
 
     Brick(float x, float y, float width, float height) {
@@ -22,6 +23,7 @@ public class Brick extends Rectangle implements Shape {
 
     Brick(float x, float y, int health) {
         this(x, y, DEFAULT_WIDTH, DEFAULT_HEIGHT);
+        this.base_health = health;
         this.health = health;
     }
 

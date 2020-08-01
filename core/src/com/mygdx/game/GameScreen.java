@@ -16,6 +16,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
+import org.omg.PortableInterceptor.DISCARDING;
 
 import java.sql.Time;
 import java.util.ArrayList;
@@ -335,44 +336,43 @@ public class GameScreen extends ScreenAdapter {
     private void checkBrickCollision() {
         for (Ball ball : balls) {
             Iterator<Brick> iterator = bricks.iterator();
-            while (iterator.hasNext()) {
+            boolean hit = false;
+            while (iterator.hasNext() && !hit) {
                 Brick b = iterator.next();
-                if (Intersector.overlaps(
-                        new Rectangle(
-                                ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2),
-                        b
-                )) {
+                Collision collision = checkCollision(ball, b);
+                if (collision.isOverlapping()) {
+                    hit = true;
                     // Check for powerUps
                     if (b.hasPowerUp())
                         powerUps.add(b.getPowerUp());
 
-                    // Check for side collision
-                    Vector2 distance = new Vector2(ball.x - ball.radius, ball.y - ball.radius).sub(b.x, b.y);
-                    Vector2 scaleFactor = new Vector2(1 / b.width, 1 / b.height);
+                    Direction dir = collision.getDirection();
+                    Vector2 difference_vector = collision.getDifference();
+                    if (dir == Direction.LEFT || dir == Direction.RIGHT) {
+                        // horizontal hit
+                        ball.setDirection(ball.getDirectionVector().scl(-1, 1));
 
-                    distance.scl(scaleFactor);
-
-                    if (Math.abs(distance.x) >= Math.abs(distance.y)) {
-                        // scaled delta x was larger than delta y. This is a horizontal hit.
-                        if (Math.signum(-ball.getDirectionVector().x) == Math.signum(distance.x)) {
-                            ball.setDirection(ball.getDirectionVector().scl(-1, 1));
-                            scoreIncrement();
-                            if (b.getHealth() == 1)
-                                iterator.remove();
-                            else
-                                b.decrementHealth();
-                        }
+                        float penetration = ball.radius - Math.abs(difference_vector.x);
+                        if (dir == Direction.LEFT)
+                            ball.x += penetration;
+                        else
+                            ball.x -= penetration;
                     } else {
-                        // scaled delta y was larger than delta x. This is a vertical hit.
-                        if (Math.signum(-ball.getDirectionVector().y) == Math.signum(distance.y)) {
-                            ball.setDirection(ball.getDirectionVector().scl(1, -1));
-                            scoreIncrement();
-                            if (b.getHealth() == 1)
-                                iterator.remove();
-                            else
-                                b.decrementHealth();
-                        }
+                        // vertical hit
+                        ball.setDirection(ball.getDirectionVector().scl(1, -1));
+
+                        float penetration = ball.radius - Math.abs(difference_vector.y);
+                        if (dir == Direction.UP)
+                            ball.y -= penetration;
+                        else
+                            ball.y += penetration;
                     }
+
+                    scoreIncrement();
+                    if (b.getHealth() == 1)
+                        iterator.remove();
+                    else
+                        b.decrementHealth();
                 }
             }
         }
@@ -468,30 +468,16 @@ public class GameScreen extends ScreenAdapter {
     private void checkPaddleCollision() {
         // Check paddle collision with balls
         for (Ball ball: balls) {
-            Vector2 distance = new Vector2(ball.x, ball.y).sub(paddle.x, paddle.y);
-            Vector2 scaleFactor = new Vector2(1 / paddle.width, 1 / paddle.height);
-
-            distance.scl(scaleFactor);
-
-            if (Intersector.overlaps(
-                    new Rectangle(
-                            ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2),
-                    paddle
-            )) {
-                if (Math.abs(distance.x) >= Math.abs(distance.y)) {
-                    // scaled delta x was larger than delta y. This is a horizontal hit.
-                    ball.setDirection(ball.getDirectionVector().scl(-1, 1));
-                    ball.setX(
-                            ((ball.x - (paddle.x + paddle.width / 2)) >= 0) ?
-                                    ball.x + ((paddle.x + paddle.width) - (ball.x - ball.radius)) :
-                                    ball.x - ((ball.x + ball.radius) - paddle.x)
-                    );
-                } else {
+            Collision collision = checkCollision(ball, paddle);
+            if (collision.isOverlapping() && collision.getDirection() == Direction.UP) {
                     // This is a vertical hit.
                     // max horizontal distance between ball center and paddle center, when colliding
                     float newAngle = 180 - ((ball.x - paddle.x) * 180) / paddle.width;
                     ball.setDirection(ball.clampAngle(newAngle));
-                }
+                    ball.getDirectionVector().y = Math.abs(ball.getDirectionVector().y);
+//                    float penetration = ball.radius - Math.abs(collision.getDifference().y);
+//                    ball.y += penetration;
+                ball.y = ball.radius + paddle.y + paddle.height;
             }
         }
 
@@ -592,4 +578,100 @@ public class GameScreen extends ScreenAdapter {
     public void setGameWon(boolean gameWon) {
         this.gameWon = gameWon;
     }
+
+    public enum Direction {
+        UP,
+        RIGHT,
+        DOWN,
+        LEFT
+    };
+
+    public Direction vectorDirection(Vector2 target) {
+        Vector2[] compass = new Vector2[] {
+            new Vector2(0.0f, 1.0f), // up
+            new Vector2(1.0f, 0.0f), // right
+            new Vector2(0.0f, -1.0f), // down
+            new Vector2(-1.0f, 0.0f) // left
+        };
+        float max = 0.0f;
+        int best_match = 0;
+
+        for (int i = 0; i < compass.length - 1; i++) {
+            Vector2 normalizedTarget = target.nor();
+            float dot_product = Vector2.dot(normalizedTarget.x, normalizedTarget.y, compass[i].x, compass[i].y);
+
+            if (dot_product > max) {
+                max = dot_product;
+                best_match = i;
+            }
+        }
+
+        return Direction.values()[best_match];
+    }
+
+    Collision checkCollision(Ball ball, Rectangle rectangle)
+    {
+        // get center point circle first
+        Vector2 ballCenter = new Vector2(ball.x, ball.y);
+        // calculate AABB info (center, half-extents)
+        Vector2 halfWidthHeightOfRect = new Vector2(rectangle.width/2f, rectangle.height/2f);
+        Vector2 rectCenter = new Vector2(
+                rectangle.x + halfWidthHeightOfRect.x,
+                rectangle.y + halfWidthHeightOfRect.y
+        );
+        // get difference vector between both centers
+        Vector2 difference = new Vector2(
+                ballCenter.x - rectCenter.x,
+                ballCenter.y - rectCenter.y
+        );
+        Vector2 clamped = new Vector2(
+                MathUtils.clamp(difference.x, -halfWidthHeightOfRect.x, halfWidthHeightOfRect.x),
+                MathUtils.clamp(difference.y, -halfWidthHeightOfRect.y, halfWidthHeightOfRect.y)
+        );
+        Vector2 closestPoint  = new Vector2(
+                rectCenter.x + clamped.x,
+                rectCenter.y + clamped.y
+        );
+        // retrieve vector between center circle and closest point AABB and check if length <= radius
+        difference = new Vector2(
+                closestPoint.x - ballCenter.x,
+                closestPoint.y - ball.y
+        );
+//        return difference.len() < ball.radius;
+        if (difference.len() <= ball.radius)
+            return new Collision(true, vectorDirection(difference), difference);
+        else
+            return new Collision(false, Direction.UP, new Vector2(0f, 0f));
+    }
+
+
+    public static class Triple<A, B, C> {
+        protected A a;
+        protected B b;
+        protected C c;
+        Triple (A a, B b, C c) {
+            this.a = a;
+            this.b = b;
+            this.c = c;
+        }
+    }
+
+    public static class Collision extends Triple<Boolean, Direction, Vector2> {
+        Collision(boolean collided, Direction dir, Vector2 difference) {
+            super(collided, dir, difference);
+        }
+
+        public boolean isOverlapping () {
+            return a;
+        }
+
+        public Direction getDirection () {
+            return b;
+        }
+
+        public Vector2 getDifference () {
+            return c;
+        }
+    }
+
 }
