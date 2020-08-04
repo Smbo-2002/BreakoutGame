@@ -1,30 +1,34 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.assets.loaders.BitmapFontLoader;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
 
-import javax.swing.text.View;
-
 public class LoadingScreen extends ScreenAdapter {
+    // Defining loading screen properties
     private static final float WORLD_WIDTH = 480;
     private static final float WORLD_HEIGHT = 640;
     private static final float PROGRESS_BAR_WIDTH = 100;
     private static final float PROGRESS_BAR_HEIGHT = 25;
     private float progress = 0;
 
+    // Defining properties for graphical part
     private ShapeRenderer shapeRenderer;
     private Viewport viewport;
     private OrthographicCamera camera;
     private final BreakoutGame breakoutGame;
+
     public LoadingScreen(BreakoutGame breakoutGame) {
         this.breakoutGame = breakoutGame;
     }
@@ -37,11 +41,24 @@ public class LoadingScreen extends ScreenAdapter {
     @Override
     public void show() {
         camera = new OrthographicCamera();
+
+        // Creating camera and setting it on the center of the world
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply(true);
+
         shapeRenderer = new ShapeRenderer();
-        breakoutGame.getAssetManager().load("background.jpg", Texture.class);
+
+        // Loading the assets
+        breakoutGame.getAssetManager().load("breakout_assets.atlas", TextureAtlas.class);
+        BitmapFontLoader.BitmapFontParameter bitmapFontParameter = new BitmapFontLoader.BitmapFontParameter();
+        bitmapFontParameter.atlasName = "breakout_assets.atlas";
+        breakoutGame.getAssetManager().load("font18.fnt", BitmapFont.class, bitmapFontParameter);
+        breakoutGame.getAssetManager().load("font32.fnt", BitmapFont.class, bitmapFontParameter);
+        breakoutGame.getAssetManager().load("font64.fnt", BitmapFont.class, bitmapFontParameter);
         breakoutGame.getAssetManager().load("bounce.mp3", Sound.class);
+        breakoutGame.getAssetManager().load("crack.mp3", Sound.class);
+        breakoutGame.getAssetManager().load("Whimsical-Popsicle.mp3", Music.class);
+
     }
 
     @Override
@@ -55,6 +72,7 @@ public class LoadingScreen extends ScreenAdapter {
     public void dispose() { shapeRenderer.dispose(); }
 
     private void update() {
+        // Check if the resources are loaded proceed to game screen
         if (breakoutGame.getAssetManager().update()) {
             breakoutGame.setScreen(new GameScreen(breakoutGame));
         } else {
@@ -72,7 +90,12 @@ public class LoadingScreen extends ScreenAdapter {
         shapeRenderer.setTransformMatrix(camera.view);
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.WHITE);
-        shapeRenderer.rect((WORLD_WIDTH  - PROGRESS_BAR_WIDTH) / 2, WORLD_HEIGHT / 2 - PROGRESS_BAR_HEIGHT / 2,progress * PROGRESS_BAR_WIDTH, PROGRESS_BAR_HEIGHT);
+        // drawing the progress
+        shapeRenderer.rect((
+                WORLD_WIDTH  - PROGRESS_BAR_WIDTH) / 2,
+                WORLD_HEIGHT / 2 - PROGRESS_BAR_HEIGHT / 2,
+                progress * PROGRESS_BAR_WIDTH,
+                PROGRESS_BAR_HEIGHT);
         shapeRenderer.end();
     }
 }

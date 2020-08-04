@@ -2,64 +2,106 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
 
+public class Ball extends Circle implements Shape {
+    public static float DEF_RADIUS = 10f;
 
-// Ball class
-public class Ball {
-    public static final float RADIUS = 15.0f; // Radius of the ball
-    public static final float SPEED = 500; // In one second ball can move 300 units
+    // ball will move 300 units per second
+    private float velocity = 500;
 
-    private final Sound bounceSound;
-    private Vector2 direction = new Vector2(0.707f, 0.707f);
-    private Vector2 position = new Vector2();
+    // direction of the ball
+    private Vector2 directionVector;
+    private float directionVectorAngle;
+
     private GameScreen gameScreen;
-    private Circle circle; // Game will use this object to check for collisions
 
-    Ball(float x, float y, Sound bounceSound, GameScreen gameScreen) {
+    // juice of the ball
+    private final Sound bounceSound;
+
+    public Ball(float x, float y, float radius, GameScreen gameScreen) {
+        super(x, y, radius);
+        directionVector = new Vector2( 0f, 1);
+        directionVectorAngle = directionVector.angle();
         this.gameScreen = gameScreen;
-        this.bounceSound = bounceSound;
-        position.set(x, y);
-        circle = new Circle(position, RADIUS);
+        this.bounceSound = gameScreen.bounceSound;
     }
 
-
-    // Draws ball on the screen
-    public void drawDebug(ShapeRenderer shapeRenderer) {
+    @Override
+    public void drawDebug(ShapeRenderer shapeRenderer, Batch batch) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("00539C"));
-        shapeRenderer.circle(position.x, position.y, RADIUS);
+        shapeRenderer.circle(x, y, radius);
+        shapeRenderer.end();
     }
 
-    public void update(float delta) {
-        // Moves ball with paddle until the game start, then ball moves by its velocity
-        if (gameScreen.getGameBegan()) {
-            Vector2 step = direction.cpy().scl(SPEED * delta);
-            position.add(step);
-            circle = new Circle(position, RADIUS);
-        } else {
-            this.position.set(gameScreen.paddle.getPosition().x + gameScreen.paddle.getWidth() /2,
-                    gameScreen.paddle.getPosition().y + gameScreen.paddle.HEIGHT + RADIUS + 10);
-        }
+    @Override
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion("ball");
+        batch.begin();
+        batch.draw(
+                textureRegion,
+                x - radius,
+                y - radius,
+                radius,
+                radius,
+                radius * 2,
+                radius * 2,
+                1,
+                1,
+                directionVectorAngle,
+                true
+        );
+        batch.end();
     }
 
+    public void move (float delta) {
+        setPosition(new Vector2(x, y).mulAdd(directionVector, velocity * delta));
+    }
+
+    public void followPaddle(Paddle paddle) {
+        setPosition(paddle.x + paddle.width/2, paddle.y + paddle.height + 20);
+    }
 
     public void playBounceSound() {
-        bounceSound.play();
+            bounceSound.play(0.5f, 1.1f, 0);
     }
 
-    public Vector2 getDirection() { return direction; }
+    // Set direction as a vector
+    public void setDirection(Vector2 direction) {
+        this.directionVector = direction;
+        this.directionVectorAngle = direction.angle();
+    }
 
-    public void setDirection(float x, float y) { this.direction.set(x, y); }
+    // Set direction by angle in degrees
+    public void setDirection(float angle) {
+        this.directionVectorAngle = angle;
+        this.directionVector.setAngle(angle);
+    }
 
-    public Vector2 getPosition() { return position; }
+    // To make game more interesting, ball will not have horizontal or vertical movements when bouncing
+    public float clampAngle(float angle) {
+        if(angle > 150f) {
+            return 150f;
+        }
+        if(angle < 30f) {
+            return 30f;
+        }
+        if(angle <= 90f && angle > 75f) {
+            return 75f;
+        }
+        if(angle >= 90f && angle < 105f) {
+            return 105f;
+        }
+        return angle;
+    }
 
-    public void setPosition(Vector2 position) { this.position.set(position); }
-
-    public void setPosition(float x, float y) { this.position.set(x, y); }
-
-    public float getRadius() { return RADIUS; }
-
-    public Circle getCircle() { return circle; }
+    public Vector2 getDirectionVector() {
+        return directionVector;
+    }
+>>>>>>> game-rebirth
 }

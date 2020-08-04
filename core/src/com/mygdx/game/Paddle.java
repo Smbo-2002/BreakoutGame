@@ -1,54 +1,60 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Color;:
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 
-public class Paddle {
-    public static final float HEIGHT = 20.0f;
-    public static final float INITIAL_WIDTH = 90.0f;
-    private float width = INITIAL_WIDTH; // Width will be changed in the future
+public class Paddle extends Rectangle implements  Shape{
+    public final static float DEF_WIDTH = 96;
+    public final static float DEF_HEIGHT = 14;
 
-    private Rectangle rectangle; // // Game will use this to check for collision, with ball
-    private Vector2 position;
-    public Vector2 cursor; // Cursor position
+    // how many units/second can paddle move
+    float velocity = 800f;
     private GameScreen gameScreen;
 
-    Paddle(float x, float y, GameScreen gameScreen) {
+    public Paddle(float x, float y, float width, float height, GameScreen gameScreen) {
+        super(x, y, width, height);
         this.gameScreen = gameScreen;
-        position = new Vector2(x, y);
-        cursor = new Vector2(x, y);
-        rectangle = new Rectangle(position.x, position.y, width, HEIGHT);
     }
 
+    @Override
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion("paddle");
+        batch.begin();
+        batch.draw(textureRegion, x, y, width, height);
+        batch.end();
+    }
 
-    // Draws paddle on the screen
-    public void drawDebug(ShapeRenderer shapeRenderer) {
+    @Override
+    public void drawDebug(ShapeRenderer shapeRenderer, Batch batch) {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(Color.valueOf("B1EA8C"));
-        shapeRenderer.rect(position.x, position.y, width, HEIGHT);
+        shapeRenderer.rect(x, y, width, height);
+        shapeRenderer.end();
     }
 
-    public void update(float delta) {
-        position.interpolate(cursor, 0.2f, Interpolation.smooth);
-        rectangle.set(position.x, position.y, width, HEIGHT);
+    // method for paddle to follow cursor
+    public void follow(float delta, Vector3 cursor) {
+        // fix of issue when paddle wobbles, because of floats
+        if (Math.abs(x + width / 2f - cursor.x) < velocity * delta)
+            return;
+
+        if(x + width / 2f > cursor.x)
+            moveLeft(delta);
+        else if(x + width / 2f < cursor.x)
+            moveRight(delta);
     }
 
-    public Vector2 getPosition() {
-        return this.position;
+    // methods for paddle to follow arrow keys
+    public void moveLeft(float delta) {
+        setX(x - velocity*delta);
     }
-
-    public void setPosition(float x) {
-        this.position.set(x, position.y);
-    }
-
-    public float getWidth() {
-        return this.width;
-    }
-
-    public Rectangle getRectangle() {
-        return this.rectangle;
+    public void moveRight(float delta) {
+        setX(x + velocity*delta);
+>>>>>>> game-rebirth
     }
 
 }
