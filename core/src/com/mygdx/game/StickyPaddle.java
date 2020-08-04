@@ -2,11 +2,13 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
 
 public class StickyPaddle extends PowerUp {
     private GameScreen gameScreen;
+    public static final String ASSET_NAME = "sticky_paddle";
 
     StickyPaddle(float x, float y, float width, float height, GameScreen gameScreen) {
         super(x, y, width, height);
@@ -25,8 +27,11 @@ public class StickyPaddle extends PowerUp {
     }
 
     @Override
-    public void draw() {
-
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion(ASSET_NAME);
+        batch.begin();
+        batch.draw(textureRegion, x, y, width, height);
+        batch.end();
     }
 
     @Override

@@ -3,22 +3,19 @@ package com.mygdx.game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.GlyphLayout;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.*;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.*;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Timer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
-import org.omg.PortableInterceptor.DISCARDING;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -28,40 +25,40 @@ public class GameScreen extends ScreenAdapter {
     public static final ArrayList<int[][]> GAME_PATTERNS = new ArrayList<>(
             Arrays.asList(
                 new int[][] {
-                        {1, 1, 1, 1, 1, 1, 1, 1},
-                        {1, 0, 0, 0, 0, 0, 0, 1},
-                        {1, 0, 1, 0, 0, 1, 0, 1},
-                        {1, 1, 1, 1, 1, 1, 1, 1},
-                        {1, 1, 0, 1, 1, 0, 1, 1},
-                        {1, 0, 1, 1, 1, 1, 0, 1},
-                        {1, 0, 1, 1, 1, 1, 0, 1},
-                        {1, 0, 1, 1, 1, 1, 0, 1},
-                        {1, 0, 1, 0, 0, 1, 0, 1},
-                        {1, 1, 1, 1, 1, 1, 1, 1},
+                        {0, 0, 0, 0, 0, 0, 0, 0},
+                        {0, 0, 0, 2, 2, 0, 0, 0},
+                        {0, 2, 2, 2, 2, 2, 2, 0},
+                        {0, 0, 1, 2, 2, 1, 0, 0},
+                        {0, 1, 1, 1, 1, 1, 1, 0},
+                        {0, 1, 0, 1, 1, 1, 1, 0},
+                        {0, 1, 1, 1, 0, 1, 1, 0},
+                        {0, 0, 1, 1, 1, 1, 0, 0},
+                        {0, 0, 0, 1, 1, 0, 0, 0},
+                        {0, 0, 0, 0, 0, 0, 0, 0},
             },
                     new int[][] {
-                            {1, 1, 1, 1, 1, 1, 1, 1},
-                            {1, 1, 0, 1, 0, 1, 0, 1},
-                            {1, 0, 0, 0, 0, 0, 0, 1},
-                            {1, 1, 1, 1, 1, 1, 1, 1},
-                            {1, 1, 1, 1, 1, 1, 1, 1},
-                            {1, 0, 1, 1, 1, 1, 0, 1},
-                            {1, 0, 1, 1, 1, 1, 0, 1},
-                            {1, 1, 1, 1, 1, 1, 1, 1},
-                            {1, 0, 1, 0, 0, 1, 0, 1},
-                            {1, 0, 0, 0, 0, 0, 0, 1},
+                            {0, 0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 1, 1, 0, 0, 0},
+                            {0, 0, 1, 1, 1, 3, 0, 0},
+                            {0, 1, 1, 1, 1, 1, 1, 0},
+                            {1, 1, 1, 3, 1, 1, 1, 1},
+                            {2, 1, 1, 1, 1, 1, 1, 2},
+                            {0, 2, 2, 1, 1, 2, 2, 0},
+                            {0, 0, 0, 2, 2, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0, 0},
                     },
                     new int[][] {
-                            {1, 1, 1, 1, 1, 1, 1, 1},
-                            {1, 1, 0, 0, 0, 0, 0, 1},
-                            {1, 0, 1, 0, 0, 0, 0, 1},
-                            {1, 0, 1, 1, 0, 0, 1, 1},
-                            {1, 1, 0, 1, 1, 0, 1, 1},
-                            {1, 0, 1, 1, 1, 1, 0, 1},
-                            {1, 0, 1, 1, 1, 1, 1, 1},
-                            {1, 0, 1, 1, 1, 1, 0, 1},
-                            {1, 1, 1, 1, 1, 1, 2, 1},
-                            {1, 1, 1, 1, 1, 1, 1, 1},
+                            {0, 0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 3, 3, 3, 3, 0, 0},
+                            {0, 0, 3, 3, 3, 3, 0, 0},
+                            {0, 3, 3, 0, 3, 3, 3, 0},
+                            {0, 3, 3, 3, 3, 3, 3, 0},
+                            {0, 3, 3, 3, 3, 3, 3, 0},
+                            {0, 0, 3, 3, 3, 3, 0, 0},
+                            {0, 0, 3, 3, 3, 3, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0, 0},
+                            {0, 0, 0, 0, 0, 0, 0, 0},
                     })
 //            Arrays.asList(
 //                    new int[][] {
@@ -129,9 +126,13 @@ public class GameScreen extends ScreenAdapter {
 
     // Assets
     // private Texture bg;
+    private TextureAtlas textureAtlas;
+
     public Sound bounceSound;
-    private BitmapFont font_32;
+    public Sound crackSound;
+    public Music music;
     private BitmapFont font_18;
+    private BitmapFont font_32;
     private BitmapFont font_64;
 
     // Game objects
@@ -142,6 +143,11 @@ public class GameScreen extends ScreenAdapter {
 
     private PauseDialog pauseDialog;
     private LevelDialog levelDialog;
+
+    // Particles
+    ParticleEffect pinkParticle = new ParticleEffect(); // lvl 1 bricks crack particles
+    ParticleEffect greenParticle = new ParticleEffect(); // lvl 2 bricks crack particles
+    ParticleEffect blueParticle = new ParticleEffect(); // lvl 3 bricks crack particles
 
     GameScreen(BreakoutGame breakoutGame) { this.breakoutGame = breakoutGame; }
 
@@ -155,14 +161,21 @@ public class GameScreen extends ScreenAdapter {
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
 
+        textureAtlas = breakoutGame.getAssetManager().get("breakout_assets.atlas");
 //        bg = breakoutGame.getAssetManager().get("background.jpg");
         bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
-        font_32 = breakoutGame.getAssetManager().get("font_32.fnt");
-        font_18 = breakoutGame.getAssetManager().get("font_18.fnt");
-        font_64 = breakoutGame.getAssetManager().get("font_64.fnt");
+        crackSound = breakoutGame.getAssetManager().get("crack.mp3");
+        music = breakoutGame.getAssetManager().get("Whimsical-Popsicle.mp3");
+        music.setLooping(true);
+        music.setVolume(0.3f);
+        music.play();
 
-        paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT);
-        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
+        font_18 = breakoutGame.getAssetManager().get("font18.fnt");
+        font_32 = breakoutGame.getAssetManager().get("font32.fnt");
+        font_64 = breakoutGame.getAssetManager().get("font64.fnt");
+
+        paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT, this);
+        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, this));
         addBricks();
 
         pauseDialog = new PauseDialog(
@@ -174,6 +187,13 @@ public class GameScreen extends ScreenAdapter {
 
         levelDialog = new LevelDialog(this);
         levelDialog.setVisible();
+
+        pinkParticle.load(Gdx.files.internal("pink.p"), textureAtlas);
+        greenParticle.load(Gdx.files.internal("green.p"), textureAtlas);
+        blueParticle.load(Gdx.files.internal("blue.p"), textureAtlas);
+        pinkParticle.start();
+        greenParticle.start();
+        blueParticle.start();
     }
 
     @Override
@@ -184,8 +204,9 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         clearScreen();
-        drawDebug();
+//        drawDebug();
         update(delta);
+        draw(delta);
     }
 
     @Override
@@ -201,6 +222,53 @@ public class GameScreen extends ScreenAdapter {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         batch.begin();
 //        batch.draw(bg, 0, 0);
+        batch.end();
+    }
+
+    private void draw(float delta) {
+        batch.setProjectionMatrix(viewport.getCamera().combined);
+        shapeRenderer.setProjectionMatrix(viewport.getCamera().combined);
+        // Draw the background
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.valueOf("F5DD67"));
+        shapeRenderer.rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        shapeRenderer.end();
+
+        // Draw other objects
+        for (Ball ball : balls) {
+            ball.draw(shapeRenderer, batch);
+        }
+        paddle.draw(shapeRenderer, batch);
+        for (Brick b: bricks)
+            b.draw(shapeRenderer, batch);
+        for (PowerUp p: powerUps)
+            p.draw(shapeRenderer, batch);
+
+        if (gamePaused) {
+            pauseDialog.draw(shapeRenderer, batch);
+        }
+
+        levelDialog.drawDebug(shapeRenderer, batch);
+
+
+        batch.begin();
+        font_32.setColor(255, 255, 255, 1);
+        font_32.draw(batch, "Score: " + score, 20, WORLD_HEIGHT-20);
+
+        GlyphLayout layout = new GlyphLayout();
+        font_32.setColor(255, 255, 255, 1);
+        layout.setText(font_32, BASE_HEALTH + "/" + health);
+        font_32.draw(batch, layout, WORLD_WIDTH/2 - layout.width/2, WORLD_HEIGHT-20);
+
+        font_18.setColor(255, 255, 255, 0.7f);
+        layout = new GlyphLayout();
+        layout.setText(font_18, "press p to pause...");
+        font_18.draw(batch, layout, WORLD_WIDTH - layout.width - 20, WORLD_HEIGHT-20);
+
+        pinkParticle.draw(batch, delta);
+        greenParticle.draw(batch, delta);
+        blueParticle.draw(batch, delta);
+
         batch.end();
     }
 
@@ -326,7 +394,8 @@ public class GameScreen extends ScreenAdapter {
                                                 PowerUp.DEF_WIDTH,
                                                 PowerUp.DEF_HEIGHT,
                                                 this
-                                        ) : null
+                                        ) : null,
+                                this
                         )
                 );
             }
@@ -342,9 +411,12 @@ public class GameScreen extends ScreenAdapter {
                 Collision collision = checkCollision(ball, b);
                 if (collision.isOverlapping()) {
                     hit = true;
+//                    ball.playBounceSound();
                     // Check for powerUps
-                    if (b.hasPowerUp())
+                    if (b.hasPowerUp() && !b.isPowerUpPicked()) {
                         powerUps.add(b.getPowerUp());
+                        b.setPowerUpPicked(true);
+                    }
 
                     Direction dir = collision.getDirection();
                     Vector2 difference_vector = collision.getDifference();
@@ -369,6 +441,22 @@ public class GameScreen extends ScreenAdapter {
                     }
 
                     scoreIncrement();
+                    b.playCrackSound();
+
+                    switch (b.getBase_health()) {
+                        case 1:
+                            pinkParticle.setDuration(3);
+                            pinkParticle.setPosition(b.x + b.width / 2, b.y + b.height / 2);
+                            break;
+                        case 2:
+                            greenParticle.setDuration(3);
+                            greenParticle.setPosition(b.x + b.width / 2, b.y + b.height / 2);
+                            break;
+                        case 3:
+                            blueParticle.setDuration(3);
+                            blueParticle.setPosition(b.x + b.width / 2, b.y + b.height / 2);
+                            break;
+                    }
                     if (b.getHealth() == 1)
                         iterator.remove();
                     else
@@ -432,7 +520,7 @@ public class GameScreen extends ScreenAdapter {
                     reset(true);
                 else if (balls.size() == 1 && health > 0) {
                     balls.clear();
-                    balls.add(new Ball(paddle.x + paddle.width/2, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
+                    balls.add(new Ball(paddle.x + paddle.width/2, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, this));
                     gameBegan = false;
                     health--;
                 }
@@ -455,7 +543,7 @@ public class GameScreen extends ScreenAdapter {
         bricks.clear();
         addBricks();
         balls.clear();
-        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, bounceSound));
+        balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, this));
         powerUps.clear();
         paddleIsExtended = false;
         paddle.width = Paddle.DEF_WIDTH;
@@ -478,6 +566,7 @@ public class GameScreen extends ScreenAdapter {
 //                    float penetration = ball.radius - Math.abs(collision.getDifference().y);
 //                    ball.y += penetration;
                 ball.y = ball.radius + paddle.y + paddle.height;
+                ball.playBounceSound();
             }
         }
 
@@ -579,12 +668,16 @@ public class GameScreen extends ScreenAdapter {
         this.gameWon = gameWon;
     }
 
+    public TextureAtlas getTextureAtlas() {
+        return textureAtlas;
+    }
+
     public enum Direction {
         UP,
         RIGHT,
         DOWN,
         LEFT
-    };
+    }
 
     public Direction vectorDirection(Vector2 target) {
         Vector2[] compass = new Vector2[] {

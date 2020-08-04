@@ -2,11 +2,14 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 
 public class ThreeBalls extends PowerUp {
     private GameScreen gameScreen;
+    public static final String ASSET_NAME = "three_balls";
+
 
     ThreeBalls(float x, float y, float width, float height, GameScreen gameScreen) {
         super(x, y, width, height);
@@ -20,7 +23,7 @@ public class ThreeBalls extends PowerUp {
                         gameScreen.getPaddle().x + gameScreen.getPaddle().width/2,
                         gameScreen.getPaddle().y + gameScreen.getPaddle().height + 20,
                         Ball.DEF_RADIUS,
-                        gameScreen.bounceSound
+                        gameScreen
                 )
         );
         gameScreen.addBall(
@@ -28,14 +31,17 @@ public class ThreeBalls extends PowerUp {
                         gameScreen.getPaddle().x + gameScreen.getPaddle().width/2,
                         gameScreen.getPaddle().y + gameScreen.getPaddle().height + 20,
                         Ball.DEF_RADIUS,
-                        gameScreen.bounceSound
+                        gameScreen
                 )
         );
     }
 
     @Override
-    public void draw() {
-
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion(ASSET_NAME);
+        batch.begin();
+        batch.draw(textureRegion, x, y, width, height);
+        batch.end();
     }
 
     @Override

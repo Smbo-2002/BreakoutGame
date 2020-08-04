@@ -2,12 +2,15 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.ScreenAdapter;
+import com.badlogic.gdx.assets.loaders.BitmapFontLoader;
+import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.badlogic.gdx.utils.viewport.Viewport;
@@ -46,11 +49,16 @@ public class LoadingScreen extends ScreenAdapter {
         shapeRenderer = new ShapeRenderer();
 
         // Loading the assets
-        breakoutGame.getAssetManager().load("background.jpg", Texture.class);
+        breakoutGame.getAssetManager().load("breakout_assets.atlas", TextureAtlas.class);
+        BitmapFontLoader.BitmapFontParameter bitmapFontParameter = new BitmapFontLoader.BitmapFontParameter();
+        bitmapFontParameter.atlasName = "breakout_assets.atlas";
+        breakoutGame.getAssetManager().load("font18.fnt", BitmapFont.class, bitmapFontParameter);
+        breakoutGame.getAssetManager().load("font32.fnt", BitmapFont.class, bitmapFontParameter);
+        breakoutGame.getAssetManager().load("font64.fnt", BitmapFont.class, bitmapFontParameter);
         breakoutGame.getAssetManager().load("bounce.mp3", Sound.class);
-        breakoutGame.getAssetManager().load("font_32.fnt", BitmapFont.class);
-        breakoutGame.getAssetManager().load("font_18.fnt", BitmapFont.class);
-        breakoutGame.getAssetManager().load("font_64.fnt", BitmapFont.class);
+        breakoutGame.getAssetManager().load("crack.mp3", Sound.class);
+        breakoutGame.getAssetManager().load("Whimsical-Popsicle.mp3", Music.class);
+
     }
 
     @Override

@@ -2,24 +2,30 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector3;
 
 public class Paddle extends Rectangle implements  Shape{
     public final static float DEF_WIDTH = 96;
-    public final static float DEF_HEIGHT = 13;
+    public final static float DEF_HEIGHT = 14;
 
     // how many units/second can paddle move
     float velocity = 800f;
+    private GameScreen gameScreen;
 
-    public Paddle(float x, float y, float width, float height) {
+    public Paddle(float x, float y, float width, float height, GameScreen gameScreen) {
         super(x, y, width, height);
+        this.gameScreen = gameScreen;
     }
 
     @Override
-    public void draw() {
-
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion("paddle");
+        batch.begin();
+        batch.draw(textureRegion, x, y, width, height);
+        batch.end();
     }
 
     @Override

@@ -1,21 +1,24 @@
 package com.mygdx.game;
 
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Interpolation;
 import com.badlogic.gdx.math.Rectangle;
 
-import java.util.Objects;
 
 public class Brick extends Rectangle implements Shape {
     public static final float DEFAULT_WIDTH = 74;
-    public static final float DEFAULT_HEIGHT = 20;
+    public static final float DEFAULT_HEIGHT = 28;
     public static final float DEFAULT_X_SPACE = 5;
     public static final float DEFAULT_Y_SPACE = 5;
     private int base_health = -1;
     private int health = base_health;
     private PowerUp powerUp;
+    private GameScreen gameScreen;
+    private Sound crackSound;
+    private boolean powerUpPicked = true;
 
     Brick(float x, float y, float width, float height) {
         super(x, y, width, height);
@@ -27,14 +30,21 @@ public class Brick extends Rectangle implements Shape {
         this.health = health;
     }
 
-    Brick(float x, float y, int health, PowerUp powerUp) {
+    Brick(float x, float y, int health, PowerUp powerUp, GameScreen gameScreen) {
         this(x, y, health);
+        if (powerUp != null)
+            powerUpPicked = false;
         this.powerUp = powerUp;
+        this.gameScreen = gameScreen;
+        this.crackSound = gameScreen.crackSound;
     }
 
     @Override
-    public void draw() {
-
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion("brick" + base_health + health);
+        batch.begin();
+        batch.draw(textureRegion, x, y, width, height);
+        batch.end();
     }
 
     @Override
@@ -43,6 +53,10 @@ public class Brick extends Rectangle implements Shape {
         shapeRenderer.setColor(Color.valueOf("ffffff"));
         shapeRenderer.rect(x, y, width, height);
         shapeRenderer.end();
+    }
+
+    public void playCrackSound() {
+        crackSound.play(1f, 1f, 0);
     }
 
     public int getHealth() {
@@ -54,10 +68,22 @@ public class Brick extends Rectangle implements Shape {
     }
 
     public boolean hasPowerUp() {
-        return !Objects.isNull(powerUp);
+        return powerUp != null;
     }
 
     public PowerUp getPowerUp() {
         return powerUp;
+    }
+
+    public int getBase_health() {
+        return base_health;
+    }
+
+    public boolean isPowerUpPicked() {
+        return powerUpPicked;
+    }
+
+    public void setPowerUpPicked(boolean powerUpPicked) {
+        this.powerUpPicked = powerUpPicked;
     }
 }

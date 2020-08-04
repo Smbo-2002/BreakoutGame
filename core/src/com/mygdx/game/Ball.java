@@ -3,6 +3,7 @@ package com.mygdx.game;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Circle;
 import com.badlogic.gdx.math.Vector2;
@@ -17,14 +18,17 @@ public class Ball extends Circle implements Shape {
     private Vector2 directionVector;
     private float directionVectorAngle;
 
+    private GameScreen gameScreen;
+
     // juice of the ball
     private final Sound bounceSound;
 
-    public Ball(float x, float y, float radius, Sound bounceSound) {
+    public Ball(float x, float y, float radius, GameScreen gameScreen) {
         super(x, y, radius);
         directionVector = new Vector2( 0f, 1);
         directionVectorAngle = directionVector.angle();
-        this.bounceSound = bounceSound;
+        this.gameScreen = gameScreen;
+        this.bounceSound = gameScreen.bounceSound;
     }
 
     @Override
@@ -36,8 +40,23 @@ public class Ball extends Circle implements Shape {
     }
 
     @Override
-    public void draw (){
-
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion("ball");
+        batch.begin();
+        batch.draw(
+                textureRegion,
+                x - radius,
+                y - radius,
+                radius,
+                radius,
+                radius * 2,
+                radius * 2,
+                1,
+                1,
+                directionVectorAngle,
+                true
+        );
+        batch.end();
     }
 
     public void move (float delta) {
@@ -49,7 +68,7 @@ public class Ball extends Circle implements Shape {
     }
 
     public void playBounceSound() {
-            bounceSound.play();
+            bounceSound.play(0.5f, 1.1f, 0);
     }
 
     // Set direction as a vector

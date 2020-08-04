@@ -7,6 +7,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Intersector;
 import com.badlogic.gdx.math.Rectangle;
@@ -25,8 +26,38 @@ public class PauseDialog extends Rectangle implements Shape {
     }
 
     @Override
-    public void draw() {
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
+        TextureRegion textureRegion = gameScreen.getTextureAtlas().findRegion("controls");
+        batch.begin();
+        batch.draw(textureRegion, x, y, width, height);
 
+        textureRegion = gameScreen.getTextureAtlas().findRegion("leaf");
+        batch.draw(textureRegion, x + width - 50, y + height - 60, 80, 100);
+
+        GlyphLayout layout = new GlyphLayout();
+        gameScreen.getFont_18().setColor(Color.valueOf("f29f05"));
+        layout.setText(gameScreen.getFont_18(), "press C to resume");
+        gameScreen.getFont_18().draw(batch, layout, x + (width - layout.width) / 2f, y + 50);
+        batch.end();
+
+        Gdx.gl.glDisable(GL20.GL_BLEND);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.valueOf("cccbca"));
+        float circle_radius = 15f;
+        float small_circle_radius = 10f;
+        float rect_width = 60f;
+        float rect_height = circle_radius*2f;
+        float full_width = circle_radius * 2f + rect_width;
+        shapeRenderer.circle(x + ((width - full_width) /2f) + circle_radius, y + height/2f - 20, circle_radius);
+        shapeRenderer.rect(x + ((width - full_width) /2f) + circle_radius, y + height/2f - circle_radius - 20, rect_width, rect_height);
+        shapeRenderer.circle(x + ((width - full_width) /2f) + rect_width + circle_radius, y + height/2f - 20, circle_radius);
+        shapeRenderer.setColor(Color.valueOf("f29f05"));
+        shapeRenderer.circle(
+                gameScreen.isMouseControl() ? x + ((width - full_width) /2f) + circle_radius : x + ((width - full_width) /2f) + circle_radius + full_width - circle_radius * 2,
+                y + height/2f - 20,
+                small_circle_radius);
+        shapeRenderer.end();
     }
 
     @Override
@@ -78,7 +109,6 @@ public class PauseDialog extends Rectangle implements Shape {
             Vector3 cursor = new Vector3();
             cursor.set(Gdx.input.getX(), Gdx.input.getY(), 0);
             gameScreen.getViewport().unproject(cursor);
-            System.out.println(cursor.x + " " + cursor.y);
             if ((cursor.x > this.x && cursor.x < this.x + width) && (cursor.y > y && cursor.y < y + height) && timePassed> 0.08) {
                 gameScreen.setMouseControl(!gameScreen.isMouseControl());
                 timePassed = 0;

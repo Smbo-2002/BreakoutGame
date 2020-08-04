@@ -15,7 +15,7 @@ public class LevelDialog implements Shape {
     }
 
     @Override
-    public void draw() {
+    public void draw(ShapeRenderer shapeRenderer, Batch batch) {
 
     }
 
@@ -29,7 +29,7 @@ public class LevelDialog implements Shape {
         shapeRenderer.end();
 
         batch.begin();
-        gameScreen.getFont_64().setColor(255, 0, 255, 1f);
+        gameScreen.getFont_64().setColor(255, 255, 255, 1f);
 
         GlyphLayout layout = new GlyphLayout();
 
