@@ -1,6 +1,6 @@
 package com.mygdx.game;
 
-import com.badlogic.gdx.graphics.Color;:
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -54,7 +54,6 @@ public class Paddle extends Rectangle implements  Shape{
     }
     public void moveRight(float delta) {
         setX(x + velocity*delta);
->>>>>>> game-rebirth
     }
 
 }

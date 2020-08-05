@@ -6,154 +6,119 @@ filter: Nearest,Nearest
 repeat: none
 ball
   rotate: false
-  xy: 516, 695
+  xy: 516, 679
   size: 20, 20
   orig: 20, 20
   offset: 0, 0
   index: -1
-ball_bounce
-  rotate: false
-  xy: 664, 802
-  size: 20, 18
-  orig: 20, 18
-  offset: 0, 0
-  index: 1
-ball_bounce
-  rotate: false
-  xy: 664, 802
-  size: 20, 18
-  orig: 20, 18
-  offset: 0, 0
-  index: 5
-ball_bounce
-  rotate: false
-  xy: 541, 718
-  size: 20, 16
-  orig: 20, 16
-  offset: 0, 0
-  index: 2
-ball_bounce
-  rotate: false
-  xy: 541, 718
-  size: 20, 16
-  orig: 20, 16
-  offset: 0, 0
-  index: 4
-ball_bounce
-  rotate: false
-  xy: 2, 2
-  size: 18, 14
-  orig: 18, 14
-  offset: 0, 0
-  index: 3
 brick11
   rotate: false
-  xy: 664, 834
+  xy: 664, 818
   size: 37, 10
   orig: 37, 10
   offset: 0, 0
   index: -1
 brick21
   rotate: false
-  xy: 2, 51
+  xy: 2, 35
   size: 37, 10
   orig: 37, 10
   offset: 0, 0
   index: -1
 brick22
   rotate: false
-  xy: 541, 736
+  xy: 541, 720
   size: 37, 10
   orig: 37, 10
   offset: 0, 0
   index: -1
 brick31
   rotate: false
-  xy: 664, 822
+  xy: 664, 806
   size: 37, 10
   orig: 37, 10
   offset: 0, 0
   index: -1
 brick32
   rotate: false
-  xy: 703, 834
+  xy: 703, 818
   size: 37, 10
   orig: 37, 10
   offset: 0, 0
   index: -1
 brick33
   rotate: false
-  xy: 2, 39
+  xy: 2, 23
   size: 37, 10
   orig: 37, 10
   offset: 0, 0
   index: -1
 controls
   rotate: false
-  xy: 516, 748
+  xy: 516, 732
   size: 146, 96
   orig: 146, 96
   offset: 0, 0
   index: -1
 cube
   rotate: false
-  xy: 52, 63
+  xy: 52, 47
   size: 8, 7
   orig: 8, 7
   offset: 0, 0
   index: -1
 extended_paddle
   rotate: false
-  xy: 2, 18
+  xy: 664, 785
   size: 19, 19
   orig: 19, 19
   offset: 0, 0
   index: -1
 font18
   rotate: false
-  xy: 2, 202
+  xy: 2, 186
   size: 512, 128
   orig: 512, 128
   offset: 0, 0
   index: -1
 font32
   rotate: false
-  xy: 2, 72
+  xy: 2, 56
   size: 512, 128
   orig: 512, 128
   offset: 0, 0
   index: -1
 font64
   rotate: false
-  xy: 2, 332
+  xy: 2, 316
   size: 512, 512
   orig: 512, 512
   offset: 0, 0
   index: -1
 leaf
   rotate: false
-  xy: 516, 717
+  xy: 516, 701
   size: 23, 29
   orig: 23, 29
   offset: 0, 0
   index: -1
 paddle
   rotate: false
-  xy: 2, 63
+  xy: 2, 47
   size: 48, 7
   orig: 48, 7
   offset: 0, 0
   index: -1
 sticky_paddle
   rotate: false
-  xy: 516, 674
+  xy: 2, 2
   size: 19, 19
   orig: 19, 19
   offset: 0, 0
   index: -1
 three_balls
   rotate: false
-  xy: 664, 781
+  xy: 516, 658
   size: 19, 19
   orig: 19, 19
   offset: 0, 0

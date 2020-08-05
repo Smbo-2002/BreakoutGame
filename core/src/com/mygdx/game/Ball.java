@@ -103,5 +103,4 @@ public class Ball extends Circle implements Shape {
     public Vector2 getDirectionVector() {
         return directionVector;
     }
->>>>>>> game-rebirth
 }

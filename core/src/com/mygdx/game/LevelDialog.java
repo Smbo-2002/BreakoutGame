@@ -16,7 +16,8 @@ public class LevelDialog implements Shape {
 
     @Override
     public void draw(ShapeRenderer shapeRenderer, Batch batch) {
-
+        // drawDebug was enough so I reused it here
+        drawDebug(shapeRenderer, batch);
     }
 
     @Override

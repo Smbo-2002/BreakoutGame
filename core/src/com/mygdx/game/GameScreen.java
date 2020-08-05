@@ -2,7 +2,6 @@ package com.mygdx.game;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.ScreenAdapter;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
@@ -22,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GameScreen extends ScreenAdapter {
+    // You can add your brick ararngment patterns her. The format is 8x10
     public static final ArrayList<int[][]> GAME_PATTERNS = new ArrayList<>(
             Arrays.asList(
                 new int[][] {
@@ -100,10 +100,12 @@ public class GameScreen extends ScreenAdapter {
 //            )
     );
 
+    // World with and  height
     public static final float WORLD_WIDTH = 640;
     public static final float WORLD_HEIGHT = 640;
+
+    // Player base health
     public static final int BASE_HEALTH = 3;
->>>>>>> game-rebirth
 
     private final BreakoutGame breakoutGame;
 
@@ -113,21 +115,20 @@ public class GameScreen extends ScreenAdapter {
     private int health = BASE_HEALTH;
 
     // Game state
-    private boolean gameBegan = false;
-    private boolean paddleIsExtended = false;
-    private boolean paddleIsSticky = false;
-    private boolean gamePaused = false;
-    private boolean mouseControl = true;
-    private boolean gameWon = false;
->>>>>>> game-rebirth
+    private boolean gameBegan = false; // ball will follow paddle, util this is true, which happens after click
+    private boolean paddleIsExtended = false; // check if the paddle picked the ExtendedPaddle powerUp
+    private boolean paddleIsSticky = false; // check if the paddle picked the StickyPaddle powerUp
+    private boolean gamePaused = false; // check if the game is paused to show PauseDialog
+    private boolean mouseControl = true; // check if mouse or keyboard control is selected
+    private boolean gameWon = false; // if all the levels get completed
 
+    // Game stuff
     private ShapeRenderer shapeRenderer;
     private SpriteBatch batch;
     private Viewport viewport;
     private OrthographicCamera camera;
 
     // Assets
-    // private Texture bg;
     private TextureAtlas textureAtlas;
 
     public Sound bounceSound;
@@ -155,7 +156,7 @@ public class GameScreen extends ScreenAdapter {
 
     @Override
     public void show() {
-
+        // create FitViewport with camera
         camera = new OrthographicCamera();
         viewport = new FitViewport(WORLD_WIDTH, WORLD_HEIGHT, camera);
         viewport.apply(true);
@@ -163,8 +164,8 @@ public class GameScreen extends ScreenAdapter {
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
 
+        // getting assets from asset manager
         textureAtlas = breakoutGame.getAssetManager().get("breakout_assets.atlas");
-//        bg = breakoutGame.getAssetManager().get("background.jpg");
         bounceSound = breakoutGame.getAssetManager().get("bounce.mp3");
         crackSound = breakoutGame.getAssetManager().get("crack.mp3");
         music = breakoutGame.getAssetManager().get("Whimsical-Popsicle.mp3");
@@ -176,6 +177,7 @@ public class GameScreen extends ScreenAdapter {
         font_32 = breakoutGame.getAssetManager().get("font32.fnt");
         font_64 = breakoutGame.getAssetManager().get("font64.fnt");
 
+        // initializing game objects
         paddle = new Paddle(WORLD_WIDTH/2 - Paddle.DEF_WIDTH/2, 50, Paddle.DEF_WIDTH, Paddle.DEF_HEIGHT, this);
         balls.add(new Ball(100, paddle.y + paddle.height + 20, Ball.DEF_RADIUS, this));
         addBricks();
@@ -190,6 +192,7 @@ public class GameScreen extends ScreenAdapter {
         levelDialog = new LevelDialog(this);
         levelDialog.setVisible();
 
+        // load and start particle effects
         pinkParticle.load(Gdx.files.internal("pink.p"), textureAtlas);
         greenParticle.load(Gdx.files.internal("green.p"), textureAtlas);
         blueParticle.load(Gdx.files.internal("blue.p"), textureAtlas);
@@ -206,9 +209,9 @@ public class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         clearScreen();
-//        drawDebug();
+//        drawDebug(); // uncomment this and comment draw(delta) to see what I saw when creating the game, debug mode
+        draw(delta); // uncomment this and comment drawDebug to see the juice of the game
         update(delta);
-        draw(delta);
     }
 
     @Override
@@ -222,10 +225,6 @@ public class GameScreen extends ScreenAdapter {
         batch.setProjectionMatrix(viewport.getCamera().combined);
         Gdx.gl.glClearColor(Color.BLACK.r, Color.BLACK.g, Color.BLACK.b, Color.BLACK.a);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-        batch.begin();
-//        batch.draw(bg, 0, 0);
-        batch.end();
     }
 
     private void draw(float delta) {
@@ -251,16 +250,16 @@ public class GameScreen extends ScreenAdapter {
             pauseDialog.draw(shapeRenderer, batch);
         }
 
-        levelDialog.drawDebug(shapeRenderer, batch);
-
+        levelDialog.draw(shapeRenderer, batch);
 
         batch.begin();
+
         font_32.setColor(255, 255, 255, 1);
         font_32.draw(batch, "Score: " + score, 20, WORLD_HEIGHT-20);
 
         GlyphLayout layout = new GlyphLayout();
         font_32.setColor(255, 255, 255, 1);
-        layout.setText(font_32, BASE_HEALTH + "/" + health);
+        layout.setText(font_32,BASE_HEALTH + "/" + health);
         font_32.draw(batch, layout, WORLD_WIDTH/2 - layout.width/2, WORLD_HEIGHT-20);
 
         font_18.setColor(255, 255, 255, 0.7f);
@@ -320,14 +319,17 @@ public class GameScreen extends ScreenAdapter {
 
 
     private void update(float delta) {
+        // check for the pauseDialog, stops the game
         checkUnpause();
         checkPaused();
         if (gamePaused) {
             pauseDialog.changeControl(delta);
             return;
         }
+        // stop the game when it is finished, after some time it will reset
         if (gameWon)
             return;
+        // check if the level is completed to move on to the next one
         if (isLevelCompleted()){
                 if (level < ( GAME_PATTERNS.size() - 1 )) {
                     level++;
@@ -337,8 +339,10 @@ public class GameScreen extends ScreenAdapter {
             return;
         }
         if (mouseControl)
+            // control game with mouse
             paddle.follow(delta, getCursorPosition());
         else {
+            // control game with left and right arrows
             if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                 paddle.moveLeft(delta);
             } else if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
@@ -346,17 +350,20 @@ public class GameScreen extends ScreenAdapter {
             }
         }
         stopPaddleLeavingTheScreen();
+        // check for sticky powerUp
         if (paddleIsSticky) {
             for (Ball ball: balls)
                 ball.followPaddle(paddle);
                 checkStickiness();
             return;
         }
+        // if not clicked on the screen ball will follow the paddle
         if (!gameBegan) {
             checkStart();
             if (!balls.isEmpty())
                 balls.get(0).followPaddle(paddle);
         }
+        // if started balls and powerUps will move
         else if (gameBegan) {
             for (Ball ball : balls)
                 ball.move(delta);
@@ -369,7 +376,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void addBricks() {
-
+        // The algorithm to add bricks to the ArrayList, also "randomly" adds powerUps to some of the bricks
         int horizontal_blocks = GAME_PATTERNS.get(level)[0].length;
         int vertical_blocks = GAME_PATTERNS.get(level).length;
 
@@ -406,6 +413,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void checkBrickCollision() {
+        // brick collision with balls is handled here
         for (Ball ball : balls) {
             Iterator<Brick> iterator = bricks.iterator();
             boolean hit = false;
@@ -504,6 +512,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void stopBallLeavingTheScreen() {
+        // Here check if the ball hit any of the walls and if it is not the south wall reflect, else reset the game
         Iterator<Ball> ballIterator = balls.iterator();
         while (ballIterator.hasNext()){
             Ball ball = ballIterator.next();
@@ -534,6 +543,9 @@ public class GameScreen extends ScreenAdapter {
     }
 
     public void reset(boolean fullReset) {
+        // resting the game
+        // use fullReset - false when moving to the next level
+        // use fullReset - true when the game is lost or is complited
         if (fullReset) {
             score = 0;
             level = 0;
@@ -557,6 +569,8 @@ public class GameScreen extends ScreenAdapter {
     }
 
     private void checkPaddleCollision() {
+        // Handles collision with balls and powerUps
+
         // Check paddle collision with balls
         for (Ball ball: balls) {
             Collision collision = checkCollision(ball, paddle);
@@ -566,8 +580,6 @@ public class GameScreen extends ScreenAdapter {
                     float newAngle = 180 - ((ball.x - paddle.x) * 180) / paddle.width;
                     ball.setDirection(ball.clampAngle(newAngle));
                     ball.getDirectionVector().y = Math.abs(ball.getDirectionVector().y);
-//                    float penetration = ball.radius - Math.abs(collision.getDifference().y);
-//                    ball.y += penetration;
                 ball.y = ball.radius + paddle.y + paddle.height;
                 ball.playBounceSound();
             }
@@ -632,7 +644,6 @@ public class GameScreen extends ScreenAdapter {
         return font_32;
     }
 
->>>>>>> game-rebirth
     public Viewport getViewport() {
         return viewport;
     }
@@ -676,6 +687,7 @@ public class GameScreen extends ScreenAdapter {
         return textureAtlas;
     }
 
+    // Direction of the moving ball
     public enum Direction {
         UP,
         RIGHT,
@@ -684,6 +696,7 @@ public class GameScreen extends ScreenAdapter {
     }
 
     public Direction vectorDirection(Vector2 target) {
+        // this method determines the direction of the ball with a simple dot product
         Vector2[] compass = new Vector2[] {
             new Vector2(0.0f, 1.0f), // up
             new Vector2(1.0f, 0.0f), // right
@@ -706,8 +719,11 @@ public class GameScreen extends ScreenAdapter {
         return Direction.values()[best_match];
     }
 
-    Collision checkCollision(Ball ball, Rectangle rectangle)
-    {
+    Collision checkCollision(Ball ball, Rectangle rectangle) {
+        // The base collision algorithm, in the begining I used simple
+        // Intersector(ball, paddle) or Intersector(ball, brick) but in hopes to improve
+        // the physics of the game I made this method
+
         // get center point circle first
         Vector2 ballCenter = new Vector2(ball.x, ball.y);
         // calculate AABB info (center, half-extents)
@@ -734,14 +750,14 @@ public class GameScreen extends ScreenAdapter {
                 closestPoint.x - ballCenter.x,
                 closestPoint.y - ball.y
         );
-//        return difference.len() < ball.radius;
+
         if (difference.len() <= ball.radius)
             return new Collision(true, vectorDirection(difference), difference);
         else
             return new Collision(false, Direction.UP, new Vector2(0f, 0f));
     }
 
-
+    // Helping classed Triple and Collision for collision detection
     public static class Triple<A, B, C> {
         protected A a;
         protected B b;

@@ -85,6 +85,5 @@ public class Brick extends Rectangle implements Shape {
 
     public void setPowerUpPicked(boolean powerUpPicked) {
         this.powerUpPicked = powerUpPicked;
->>>>>>> game-rebirth
     }
 }
